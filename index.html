@@ -66,12 +66,8 @@ h1{font-size:22px;margin:4px 0 14px}
 .tm{font-variant-numeric:tabular-nums}
 .tag{display:inline-block;font-size:11px;color:var(--sub);background:var(--card2);border-radius:6px;padding:1px 6px;margin-left:6px;font-weight:500}
 .empty{color:var(--sub);padding:30px 10px;text-align:center}
-.modal{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:50;display:none;align-items:center;justify-content:center;padding:16px}
-.modal.on{display:flex}
-.sheet{background:var(--card);border-radius:16px;max-width:460px;width:100%;max-height:92vh;overflow:auto;padding:18px;position:relative;border:1px solid var(--line)}
-.sheet .cover{width:min(300px,100%);margin:0 auto 14px;border-radius:12px}
-.sheet h2{margin:0 0 2px;font-size:19px}
-.close{position:absolute;right:10px;top:10px;width:34px;height:34px;border-radius:50%;border:0;background:rgba(0,0,0,.45);color:#fff;font-size:18px;cursor:pointer;z-index:2}
+.svbody .cover{width:min(300px,100%);margin:0 auto 14px;border-radius:12px}
+.svbody h2{margin:0 0 2px;font-size:19px}
 dl{margin:12px 0;display:grid;grid-template-columns:64px 1fr;gap:6px 10px;font-size:14px}
 dt{color:var(--sub)}dd{margin:0}
 .note{background:var(--card2);border-radius:10px;padding:9px 11px;font-size:13.5px;margin:8px 0}
@@ -87,6 +83,18 @@ footer{max-width:980px;margin:10px auto 30px;padding:0 16px;color:var(--sub);fon
 }
 @media(max-width:380px){.grid{grid-template-columns:1fr}}
 
+
+.hback{display:none;flex:none;align-items:center;justify-content:center;padding:0}
+.hback.show{display:inline-flex}
+.hback svg{width:20px;height:20px;display:block}
+.sv{position:fixed;inset:0;z-index:60;background:var(--bg);overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;transform:translateX(100%);visibility:hidden}
+.sv.on{transform:none;visibility:visible}
+.sv.anim{transition:transform .26s cubic-bezier(.2,.8,.2,1),visibility 0s linear .26s}
+.sv.on.anim{transition:transform .26s cubic-bezier(.2,.8,.2,1),visibility 0s}
+.svbar{position:sticky;top:0;z-index:2;background:var(--bg);border-bottom:1px solid var(--line);padding:calc(env(safe-area-inset-top,0px) + 12px) 16px 10px;display:flex;align-items:center;gap:10px}
+.svbar .svt{flex:1;min-width:0;font-weight:700;font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.svbody{max-width:560px;margin:0 auto;padding:16px 16px calc(env(safe-area-inset-bottom,0px) + 40px)}
+@media(prefers-reduced-motion:reduce){.sv.anim,.sv.on.anim{transition:none}}
 .tabs{max-width:980px;margin:0 auto;padding:0 16px 8px;display:flex;gap:8px}
 .tab{border:1px solid var(--line);background:var(--card);color:var(--sub);border-radius:999px;padding:5px 16px;font:inherit;font-weight:600;cursor:pointer}
 .tab.on{background:var(--accent);color:var(--accent-t);border-color:var(--accent)}
@@ -132,6 +140,7 @@ html.mobile .nehint{display:none}
 </head>
 <body>
 <header><div class="bar">
+ <button class="icon-btn hback" id="hback" type="button" title="返回上一页" aria-label="返回上一页"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></button>
  <div class="logo-wrap"><div class="logo" id="logo">♪<span> Harmonia 的八音盒</span></div>
  <button class="icon-btn reload-btn" id="reload" type="button" title="刷新页面" aria-label="刷新页面"><svg viewBox="0 0 24 24" aria-hidden="true" fill="currentColor"><path d="M12 2.2l1.7 6.6L20.5 12l-6.8 3.2L12 21.8l-1.7-6.6L3.5 12l6.8-3.2L12 2.2zm0 5.3l-.7 2.7-2.8 1.3 2.8 1.3.7 2.7.7-2.7 2.8-1.3-2.8-1.3L12 7.5z"/></svg></button></div>
  <label class="search"><span>🔍</span><input id="q" type="search" placeholder="搜索歌名、歌手" autocomplete="off"></label>
@@ -142,7 +151,7 @@ html.mobile .nehint{display:none}
 <main id="app"></main>
 <footer id="foot"></footer>
 <div class="toast" id="toast"></div>
-<div class="modal" id="modal"><div class="sheet" id="sheet"></div></div>
+<div class="sv" id="sv" aria-hidden="true"><div class="svbar"><button class="icon-btn hback show" id="svback" type="button" title="返回上一页" aria-label="返回上一页"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></button><div class="svt" id="svt"></div><button class="icon-btn reload-btn" id="svreload" type="button" title="刷新页面" aria-label="刷新页面"><svg viewBox="0 0 24 24" aria-hidden="true" fill="currentColor"><path d="M12 2.2l1.7 6.6L20.5 12l-6.8 3.2L12 21.8l-1.7-6.6L3.5 12l6.8-3.2L12 2.2zm0 5.3l-.7 2.7-2.8 1.3 2.8 1.3.7 2.7.7-2.7 2.8-1.3-2.8-1.3L12 7.5z"/></svg></button></div><div class="svbody" id="svbody"></div></div>
 <script>
 /* ---- links.js: pure link logic (no DOM), unit-tested with node ---- */
 var LinkKit=(function(){
@@ -201,13 +210,14 @@ function plCover(p){
  return '<div class="cover">'+ph(p.name)+'</div>';
 }
 /* ---------- buttons (data-kind drives the app-launch logic) ---------- */
+function skey(s,p,i){var m=/track\/(\w+)/.exec(s.spotify||"");return m?m[1]:(p?"pl-"+p.id+"-"+i:"r-"+i);}
 function btnSp(s){return s.spotify?'<a class="btn b-sp" data-kind="sp" data-stop href="'+esc(s.spotify)+'" target="_blank" rel="noopener noreferrer">在 Spotify 收听</a>':'<span class="btn b-off">Spotify 暂无</span>';}
 function btnNe(s){var l=s.netease&&LinkKit.neLinks(s.netease);return l?'<span class="nebox"><a class="btn b-ne" data-kind="ne" data-stop data-app="'+esc(l.app)+'" data-web="'+esc(l.web)+'" href="'+esc(l.desk)+'" target="_blank" rel="noopener noreferrer">在网易云收听</a><small class="nehint">电脑端会先打开网页版</small></span>':'<span class="btn b-off">网易云暂无</span>';}
 function btnAlt(s){return s.alt_url?'<a class="btn b-yt" data-stop href="'+esc(s.alt_url)+'" target="_blank" rel="noopener noreferrer">YouTube 备选</a>':'';}
 /* ---------- rows ---------- */
 function rowHtml(p,s,i,showPl){
  var yt=ytTime(p,s);
- return '<div class="row" data-k="p" data-p="'+esc(p.id)+'" data-i="'+i+'">'
+ return '<div class="row" data-k="p" data-sk="'+esc(skey(s,p,i))+'">'
   +(showPl?'':'<div class="idx">'+(i+1)+'</div>')
   +'<div class="cover">'+cover(s)+'</div>'
   +'<div class="info"><div class="t">'+esc(s.title)+'</div><div class="a">'+esc(s.artist)+'</div>'
@@ -240,7 +250,7 @@ function introHtml(r){
  return '<details data-stop><summary>我当初的介绍（'+esc(r.intro_date)+' 推送）</summary><div class="txt">'+md(r.intro)+'</div></details>';
 }
 function ratedRow(r,idx,showArtist){
- return '<div class="row col" data-k="r" data-i="'+idx+'">'
+ return '<div class="row col" data-k="r" data-sk="'+esc(skey(r,null,idx))+'">'
   +'<div class="cover" style="width:52px;height:52px;border-radius:8px;flex:none">'+cover(r)+'</div>'
   +'<div class="info"><div class="t">'+esc(r.title)+'</div>'
   +(showArtist?'<div class="a">'+esc(r.artist)+'</div>':'')
@@ -287,16 +297,14 @@ function home(){
 }
 function playlist(id){
  var p=LIB.filter(function(x){return x.id===id;})[0];
- if(!p){location.hash="#/";return;}
+ if(!p)return;
  setTab("pl");document.title=p.name+" · Harmonia 的八音盒";
  var src=p.source||{};
- var h='<button class="back" id="back">← 返回</button><div class="phead">'+plCover(p)+'<div><h1>'+esc(p.name)+'</h1>'
+ var h='<div class="phead">'+plCover(p)+'<div><h1>'+esc(p.name)+'</h1>'
   +'<div class="meta">来源：'+(src.url?'<a href="'+esc(src.url)+'" target="_blank" rel="noopener noreferrer">'+esc(src.name)+'</a>':esc(src.name))+'</div>'
   +'<div class="meta">收录日期：'+esc(p.added)+' · '+p.songs.length+' 首</div><div class="desc">'+esc(p.description)+'</div></div></div><div class="list">';
  p.songs.forEach(function(s,i){h+=rowHtml(p,s,i,false);});
  app.innerHTML=h+'</div>';
- document.getElementById("back").onclick=function(){location.hash="#/";};
- window.scrollTo(0,0);
 }
 function artistsHome(){
  setTab("ar");document.title="按歌手 · Harmonia 的八音盒";
@@ -306,16 +314,14 @@ function artistsHome(){
 }
 function artistPage(name){
  var a=ARTISTS.filter(function(x){return x.name===name;})[0];
- if(!a){location.hash="#/artists";return;}
+ if(!a)return;
  setTab("ar");document.title=a.name+" · Harmonia 的八音盒";
- var h='<button class="back" id="back">← 返回</button><div class="phead"><div class="cover artist-av">'+cover(a.avatar)+'</div><div><h1>'+esc(a.name)+'</h1>'
+ var h='<div class="phead"><div class="cover artist-av">'+cover(a.avatar)+'</div><div><h1>'+esc(a.name)+'</h1>'
   +'<div class="meta">'+a.idx.length+' 首 · 帮我收藏'+(a.spotify_artist_url?' · <a href="'+esc(a.spotify_artist_url)+'" target="_blank" rel="noopener noreferrer">Spotify 艺人页</a>':'')+(a.artist_image?'':' · 暂无艺人头像，暂用歌曲封面')+'</div></div></div>'
   +'<div class="list" id="alist"></div>';
  app.innerHTML=h;
  var out="";a.idx.forEach(function(ri){out+=ratedRow(RATED[ri],ri,false);});
  document.getElementById("alist").innerHTML=out;
- document.getElementById("back").onclick=function(){location.hash="#/artists";};
- window.scrollTo(0,0);
 }
 function search(t){
  var k=t.trim().toLowerCase(),h="",c=0;
@@ -327,10 +333,13 @@ function search(t){
  if(ps)h+='<div class="sec-h">歌单里的歌</div><div class="list">'+ps+'</div>';
  app.innerHTML=c?'<h1>搜索结果</h1>'+h:'<div class="empty">没有找到与「'+esc(t)+'」相关的歌曲或歌手</div>';
 }
-/* ---------- detail modal ---------- */
-function openModal(h){var sh=document.getElementById("sheet");sh.innerHTML='<button class="close" id="cl" aria-label="关闭">×</button>'+h;document.getElementById("modal").classList.add("on");sh.scrollTop=0;document.getElementById("cl").onclick=closeM;}
-function detailP(pid,i){
- var p=LIB.filter(function(x){return x.id===pid;})[0],s=p&&p.songs[i];if(!s)return;
+/* ---------- songs index + full-screen song view ---------- */
+var SONGS={};
+LIB.forEach(function(p){p.songs.forEach(function(s,i){var k=skey(s,p,i);SONGS[k]={key:k,kind:"p",p:p,s:s,i:i,title:s.title,artist:s.artist,parent:"#/playlist/"+encodeURIComponent(p.id)};});});
+RATED.forEach(function(r,i){var k=skey(r,null,i);SONGS[k]={key:k,kind:"r",r:r,i:i,title:r.title,artist:r.artist,parent:ARTISTS.some(function(a){return a.name===r.artist;})?"#/artist/"+encodeURIComponent(r.artist):"#/artists"};});
+var SV=document.getElementById("sv"),SVB=document.getElementById("svbody"),SVT=document.getElementById("svt"),HB=document.getElementById("hback");
+var svOpen=false,svKey=null,animNext=false;
+function songP(sg){var p=sg.p,s=sg.s;
  var yt=ytTime(p,s);
  var h='<div class="cover">'+cover(s)+'</div><h2>'+esc(s.title)+'</h2><div class="meta">'+esc(s.artist)+'</div><dl>'
   +'<dt>专辑</dt><dd>'+esc(s.album||"—")+'</dd><dt>年份</dt><dd>'+esc(s.year||"—")+'</dd>'
@@ -339,10 +348,9 @@ function detailP(pid,i){
  if(s.netease_note)h+='<div class="note"><b>网易云</b>　'+esc(s.netease_note)+'</div>';
  h+=liveHtml(s);
  h+='<div class="links">'+btnSp(s)+btnNe(s)+btnAlt(s)+(yt?'<a class="btn b-yt" href="'+esc(yt)+'" target="_blank" rel="noopener noreferrer">视频 '+fmt(s.time_sec)+'</a>':'')+'</div>';
- openModal(h);
+ return h;
 }
-function detailR(i){
- var r=RATED[i];if(!r)return;
+function songR(sg){var r=sg.r;
  var h='<div class="cover">'+cover(r)+'</div><h2>'+esc(r.title)+'</h2><div class="meta">'+esc(r.artist)+'</div><dl>'
   +'<dt>专辑</dt><dd>'+esc(r.album||"—")+'</dd><dt>年份</dt><dd>'+esc(r.year||"—")+'</dd>'
   +'<dt>评分</dt><dd><span class="rt rt'+r.rating+'">'+RL[r.rating]+'</span></dd>'
@@ -353,17 +361,86 @@ function detailR(i){
  h+='<div class="intro-full"><b>我当初的介绍</b>'+(r.intro_found?'（'+esc(r.intro_date)+' 推送）<br>'+md(r.intro):'<br>当初的介绍未能找回')+'</div>';
  h+=liveHtml(r);
  h+='<div class="links">'+btnSp(r)+btnNe(r)+'</div>';
- openModal(h);
+ return h;
 }
-function closeM(){document.getElementById("modal").classList.remove("on");}
-/* ---------- routing ---------- */
+
+function showSong(sg){
+ if(svOpen&&svKey===sg.key)return;
+ var fresh=!svOpen,an=animNext;
+ SVB.innerHTML=sg.kind==="p"?songP(sg):songR(sg);SVT.textContent=sg.title;
+ document.title=sg.title+" · "+sg.artist+" · Harmonia 的八音盒";
+ SV.scrollTop=0;SV.setAttribute("aria-hidden","false");
+ if(fresh){SV.classList.toggle("anim",an);if(an){void SV.offsetWidth;}SV.classList.add("on");}
+ svOpen=true;svKey=sg.key;
+}
+function hideSong(){
+ if(!svOpen)return;
+ SV.classList.toggle("anim",animNext);
+ SV.classList.remove("on");SV.setAttribute("aria-hidden","true");
+ svOpen=false;svKey=null;
+}
+/* ---------- routing (History API; 每层一个 hash) ----------
+   #/  #/artists  #/playlist/<id>  #/artist/<名字>  #/song/<key>   （旧的 #/p/ #/a/ 仍可识别） */
+function dec(s){try{return decodeURIComponent(s);}catch(e){return s;}}
+function parse(h){
+ h=h==null?location.hash:h;var m;
+ if((m=/^#\/song\/(.+)$/.exec(h)))return {t:"song",k:dec(m[1])};
+ if((m=/^#\/(?:playlist|p)\/(.+)$/.exec(h)))return {t:"pl",k:dec(m[1])};
+ if((m=/^#\/(?:artist|a)\/(.+)$/.exec(h)))return {t:"ar",k:dec(m[1])};
+ if(h==="#/artists")return {t:"arhome"};
+ return {t:"home"};
+}
+function isTop(p){return p.t==="home"||p.t==="arhome";}
+function parentOf(p){
+ if(p.t==="song"){var s=SONGS[p.k];return s?s.parent:"#/";}
+ if(p.t==="ar")return "#/artists";
+ if(p.t==="pl"||p.t==="arhome")return "#/";
+ return null;
+}
+function depth(){var s=history.state;return s&&typeof s.n==="number"?s.n:0;}
+var curKey=null,scrollMap={};
 function route(){
- if(q.value.trim()){search(q.value);return;}
- var h=location.hash,m;
- if((m=/^#\/p\/(.+)$/.exec(h)))playlist(decodeURIComponent(m[1]));
- else if((m=/^#\/a\/(.+)$/.exec(h)))artistPage(decodeURIComponent(m[1]));
- else if(h==="#/artists")artistsHome();
- else home();
+ var p=parse(),song=null;
+ if(p.t==="song"){
+  song=SONGS[p.k];
+  if(!song){history.replaceState({n:depth()},"","#/");route();return;}
+  p=parse(song.parent);
+ }
+ if((p.t==="pl"&&!LIB.some(function(x){return x.id===p.k;}))||(p.t==="ar"&&!ARTISTS.some(function(x){return x.name===p.k;}))){history.replaceState({n:depth()},"",p.t==="ar"?"#/artists":"#/");route();return;}
+ var key=p.t+":"+(p.k||"")+"|"+(isTop(p)?q.value.trim():"");
+ if(song&&curKey!==null)key=curKey;
+ if(key!==curKey){
+  if(curKey!==null)scrollMap[curKey]=window.scrollY;
+  curKey=key;
+  if(isTop(p)&&q.value.trim()){setTab(p.t==="arhome"?"ar":"pl");search(q.value);}
+  else if(p.t==="pl")playlist(p.k);
+  else if(p.t==="ar")artistPage(p.k);
+  else if(p.t==="arhome")artistsHome();
+  else home();
+  window.scrollTo(0,scrollMap[key]||0);
+ }
+ if(song)showSong(song);else hideSong();
+ animNext=false;
+ HB.classList.toggle("show",!isTop(parse()));
+}
+function nav(h){
+ if(h===location.hash){route();return;}
+ animNext=true;
+ history.pushState({n:depth()+1},"",h);
+ route();
+}
+function goBack(){
+ animNext=true;
+ if(depth()>0){history.back();return;}
+ var par=parentOf(parse());
+ if(par){history.replaceState({n:0},"",par);route();}else animNext=false;
+}
+function doReload(e){
+ if(e)e.stopPropagation();
+ try{sessionStorage.setItem("hb_n",String(depth()));}catch(x){}
+ var u=new URL(location.href);
+ u.searchParams.set("r",String(Date.now()));
+ location.replace(u.href);
 }
 /* ---------- app-launch for streaming buttons ---------- */
 var toastT=null;
@@ -379,30 +456,39 @@ document.addEventListener("click",function(e){
 app.addEventListener("click",function(e){
  if(e.target.closest("[data-stop]"))return;
  var r=e.target.closest(".row");
- if(r){if(r.getAttribute("data-k")==="r")detailR(+r.getAttribute("data-i"));else detailP(r.getAttribute("data-p"),+r.getAttribute("data-i"));return;}
- var c=e.target.closest(".pl");if(c){q.value="";location.hash="#/p/"+encodeURIComponent(c.getAttribute("data-pl"));return;}
- var ac=e.target.closest(".ac");if(ac){q.value="";location.hash="#/a/"+encodeURIComponent(ac.getAttribute("data-ar"));}
+ if(r){nav("#/song/"+encodeURIComponent(r.getAttribute("data-sk")));return;}
+ var c=e.target.closest(".pl");if(c){nav("#/playlist/"+encodeURIComponent(c.getAttribute("data-pl")));return;}
+ var ac=e.target.closest(".ac");if(ac){nav("#/artist/"+encodeURIComponent(ac.getAttribute("data-ar")));}
 });
-document.getElementById("modal").addEventListener("click",function(e){if(e.target.id==="modal")closeM();});
-document.addEventListener("keydown",function(e){if(e.key==="Escape")closeM();});
-q.addEventListener("input",route);
-window.addEventListener("hashchange",route);
-function goTab(t){q.value="";var want=t==="ar"?"#/artists":"#/";if(location.hash===want||(want==="#/"&&!location.hash))route();else location.hash=want;}
+document.addEventListener("keydown",function(e){if(e.key==="Escape"&&svOpen)goBack();});
+q.addEventListener("input",function(){if(!isTop(parse())&&q.value.trim()){nav("#/");return;}route();});
+window.addEventListener("popstate",route);
+window.addEventListener("hashchange",function(){if(history.state==null)history.replaceState({n:0},"");route();});
+window.addEventListener("pageshow",function(ev){if(ev.persisted||!app.innerHTML)route();});
+HB.onclick=goBack;document.getElementById("svback").onclick=goBack;document.getElementById("svreload").onclick=doReload;
+function goTab(t){q.value="";nav(t==="ar"?"#/artists":"#/");}
 document.getElementById("tab-pl").onclick=function(){goTab("pl");};
 document.getElementById("tab-ar").onclick=function(){goTab("ar");};
 document.getElementById("logo").onclick=function(){goTab("pl");};
-document.getElementById("reload").onclick=function(e){
- e.stopPropagation();
- // 强制重新加载当前页（带 cache-bust，保留 hash 路由）
- var u=new URL(location.href);
- u.searchParams.set("r", String(Date.now()));
- location.replace(u.href);
-};
+document.getElementById("reload").onclick=doReload;
 function setTheme(t){document.documentElement.setAttribute("data-theme",t);try{localStorage.setItem("theme",t);}catch(e){}}
 var saved=null;try{saved=localStorage.getItem("theme");}catch(e){}
 setTheme(saved||"dark");
 if(LinkKit.isMobile(navigator))document.documentElement.classList.add("mobile");
 document.getElementById("theme").onclick=function(){setTheme(document.documentElement.getAttribute("data-theme")==="dark"?"light":"dark");};
+/* 初始化：首次进入（没有 history.state）时，把祖先层级预先铺进历史栈，这样直接打开 #/song/<id> 也能一层层右滑返回 */
+try{history.scrollRestoration="manual";}catch(e){}
+(function(){
+ var saved=null;try{saved=sessionStorage.getItem("hb_n");sessionStorage.removeItem("hb_n");}catch(e){}
+ if(saved!==null&&history.state==null){history.replaceState({n:+saved||0},"");return;}
+ if(history.state!=null&&typeof history.state.n==="number")return;
+ var cur=location.hash||"#/",anc=[],par=parentOf(parse(cur));
+ while(par){anc.unshift(par);par=parentOf(parse(par));}
+ if(!anc.length){history.replaceState({n:0},"");return;}
+ history.replaceState({n:0},"",anc[0]);
+ for(var i=1;i<anc.length;i++)history.pushState({n:i},"",anc[i]);
+ history.pushState({n:anc.length},"",cur);
+})();
 route();
 })();
 </script>
