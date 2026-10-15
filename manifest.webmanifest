@@ -1,6 +1,6 @@
 {
-  "name": "乐之丘",
-  "short_name": "乐之丘",
+  "name": "Apollo 的八音盒",
+  "short_name": "Apollo 的八音盒",
   "description": "personal music library index",
   "start_url": "./",
   "scope": "./",

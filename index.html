@@ -6,11 +6,11 @@
 <meta name="color-scheme" content="dark light">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="乐之丘">
+<meta name="apple-mobile-web-app-title" content="Apollo 的八音盒">
 <meta name="mobile-web-app-capable" content="yes">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="manifest" href="manifest.webmanifest">
-<title>乐之丘</title>
+<title>Apollo 的八音盒</title>
 <style>
 :root{--bg:#f4f5f7;--card:#fff;--card2:#eef0f3;--text:#1c1f24;--sub:#6b7280;--line:#e2e5ea;--accent:#1db954;--accent-t:#fff;--ne:#d43c33;--shadow:0 1px 3px rgba(0,0,0,.08)}
 :root[data-theme=dark]{--bg:#121417;--card:#1b1e23;--card2:#252930;--text:#e8eaed;--sub:#9aa1ab;--line:#2c3037;--accent:#1db954;--accent-t:#06210f;--ne:#e5574e;--shadow:0 1px 3px rgba(0,0,0,.5)}
@@ -118,7 +118,7 @@ html.mobile .nehint{display:none}
 </head>
 <body>
 <header><div class="bar">
- <div class="logo" id="logo">♪<span> 乐之丘</span></div>
+ <div class="logo" id="logo">♪<span> Apollo 的八音盒</span></div>
  <label class="search"><span>🔍</span><input id="q" type="search" placeholder="搜索歌名、歌手" autocomplete="off"></label>
  <button class="icon-btn" id="theme" title="切换深色/浅色" aria-label="切换深色或浅色">◐</button>
 </div>
@@ -232,7 +232,7 @@ function artistCard(a){
 var curFilter=0;
 function setTab(t){document.getElementById("tab-pl").classList.toggle("on",t==="pl");document.getElementById("tab-ar").classList.toggle("on",t==="ar");}
 function home(){
- setTab("pl");document.title="乐之丘";
+ setTab("pl");document.title="Apollo 的八音盒";
  var n=LIB.reduce(function(a,p){return a+p.songs.length;},0);
  var h='<h1>我的歌单</h1><div class="grid">';
  LIB.forEach(function(p){
@@ -246,7 +246,7 @@ function home(){
 function playlist(id){
  var p=LIB.filter(function(x){return x.id===id;})[0];
  if(!p){location.hash="#/";return;}
- setTab("pl");document.title=p.name+" · 乐之丘";
+ setTab("pl");document.title=p.name+" · Apollo 的八音盒";
  var src=p.source||{};
  var h='<button class="back" id="back">← 返回</button><div class="phead">'+plCover(p)+'<div><h1>'+esc(p.name)+'</h1>'
   +'<div class="meta">来源：'+(src.url?'<a href="'+esc(src.url)+'" target="_blank" rel="noopener noreferrer">'+esc(src.name)+'</a>':esc(src.name))+'</div>'
@@ -257,7 +257,7 @@ function playlist(id){
  window.scrollTo(0,0);
 }
 function artistsHome(){
- setTab("ar");document.title="按歌手 · 乐之丘";
+ setTab("ar");document.title="按歌手 · Apollo 的八音盒";
  var c1=RATED.filter(function(r){return r.rating===1;}).length;
  var h='<h1>按歌手</h1><div class="meta" style="margin:-8px 0 14px">收录你打过 1 分（帮我收藏）和 2 分（有点意思）的歌：共 '+RATED.length+' 首（1 分 '+c1+' · 2 分 '+(RATED.length-c1)+'），'+ARTISTS.length+' 位歌手。</div><div class="agrid">';
  ARTISTS.forEach(function(a){h+=artistCard(a);});
@@ -266,7 +266,7 @@ function artistsHome(){
 function artistPage(name){
  var a=ARTISTS.filter(function(x){return x.name===name;})[0];
  if(!a){location.hash="#/artists";return;}
- setTab("ar");document.title=a.name+" · 乐之丘";
+ setTab("ar");document.title=a.name+" · Apollo 的八音盒";
  var h='<button class="back" id="back">← 返回</button><div class="phead"><div class="cover">'+cover(a.avatar)+'</div><div><h1>'+esc(a.name)+'</h1>'
   +'<div class="meta">'+a.idx.length+' 首 · 1 分 '+a.c1+' · 2 分 '+a.c2+'</div></div></div>'
   +'<div class="chips" id="chips"><button class="chip" data-f="0">全部</button><button class="chip" data-f="1">只看 1 分</button><button class="chip" data-f="2">只看 2 分</button></div>'
