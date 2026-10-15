@@ -1,6 +1,6 @@
 {
-  "name": "歌单集",
-  "short_name": "歌单集",
+  "name": "乐之丘",
+  "short_name": "乐之丘",
   "description": "personal music library index",
   "start_url": "./",
   "scope": "./",

@@ -6,11 +6,11 @@
 <meta name="color-scheme" content="dark light">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="歌单集">
+<meta name="apple-mobile-web-app-title" content="乐之丘">
 <meta name="mobile-web-app-capable" content="yes">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="manifest" href="manifest.webmanifest">
-<title>歌单集</title>
+<title>乐之丘</title>
 <style>
 :root{--bg:#f4f5f7;--card:#fff;--card2:#eef0f3;--text:#1c1f24;--sub:#6b7280;--line:#e2e5ea;--accent:#1db954;--accent-t:#fff;--ne:#d43c33;--shadow:0 1px 3px rgba(0,0,0,.08)}
 :root[data-theme=dark]{--bg:#121417;--card:#1b1e23;--card2:#252930;--text:#e8eaed;--sub:#9aa1ab;--line:#2c3037;--accent:#1db954;--accent-t:#06210f;--ne:#e5574e;--shadow:0 1px 3px rgba(0,0,0,.5)}
@@ -18,8 +18,8 @@
 html,body{margin:0}
 body{background:var(--bg);color:var(--text);font:15px/1.55 -apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei","Noto Sans CJK SC","Noto Sans JP",sans-serif;padding-bottom:env(safe-area-inset-bottom)}
 a{color:inherit}
-header{position:sticky;top:0;z-index:20;background:var(--bg);border-bottom:1px solid var(--line)}
-.bar{max-width:980px;margin:0 auto;padding:10px 16px;display:flex;gap:10px;align-items:center}
+header{position:sticky;top:0;z-index:20;background:var(--bg);border-bottom:1px solid var(--line);padding-top:env(safe-area-inset-top,0px)}
+.bar{max-width:980px;margin:0 auto;padding:calc(12px) 16px 10px;display:flex;gap:10px;align-items:center}
 .logo{font-weight:700;font-size:17px;white-space:nowrap;cursor:pointer}
 .search{flex:1;min-width:0;display:flex;align-items:center;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:0 10px}
 .search input{flex:1;min-width:0;border:0;outline:0;background:transparent;color:var(--text);font:inherit;padding:9px 4px}
@@ -118,7 +118,7 @@ html.mobile .nehint{display:none}
 </head>
 <body>
 <header><div class="bar">
- <div class="logo" id="logo">♪<span> 音乐收集站</span></div>
+ <div class="logo" id="logo">♪<span> 乐之丘</span></div>
  <label class="search"><span>🔍</span><input id="q" type="search" placeholder="搜索歌名、歌手" autocomplete="off"></label>
  <button class="icon-btn" id="theme" title="切换深色/浅色" aria-label="切换深色或浅色">◐</button>
 </div>
@@ -232,7 +232,7 @@ function artistCard(a){
 var curFilter=0;
 function setTab(t){document.getElementById("tab-pl").classList.toggle("on",t==="pl");document.getElementById("tab-ar").classList.toggle("on",t==="ar");}
 function home(){
- setTab("pl");document.title="私人音乐收集站";
+ setTab("pl");document.title="乐之丘";
  var n=LIB.reduce(function(a,p){return a+p.songs.length;},0);
  var h='<h1>我的歌单</h1><div class="grid">';
  LIB.forEach(function(p){
@@ -246,7 +246,7 @@ function home(){
 function playlist(id){
  var p=LIB.filter(function(x){return x.id===id;})[0];
  if(!p){location.hash="#/";return;}
- setTab("pl");document.title=p.name+" · 音乐收集站";
+ setTab("pl");document.title=p.name+" · 乐之丘";
  var src=p.source||{};
  var h='<button class="back" id="back">← 返回</button><div class="phead">'+plCover(p)+'<div><h1>'+esc(p.name)+'</h1>'
   +'<div class="meta">来源：'+(src.url?'<a href="'+esc(src.url)+'" target="_blank" rel="noopener noreferrer">'+esc(src.name)+'</a>':esc(src.name))+'</div>'
@@ -257,7 +257,7 @@ function playlist(id){
  window.scrollTo(0,0);
 }
 function artistsHome(){
- setTab("ar");document.title="按歌手 · 音乐收集站";
+ setTab("ar");document.title="按歌手 · 乐之丘";
  var c1=RATED.filter(function(r){return r.rating===1;}).length;
  var h='<h1>按歌手</h1><div class="meta" style="margin:-8px 0 14px">收录你打过 1 分（帮我收藏）和 2 分（有点意思）的歌：共 '+RATED.length+' 首（1 分 '+c1+' · 2 分 '+(RATED.length-c1)+'），'+ARTISTS.length+' 位歌手。</div><div class="agrid">';
  ARTISTS.forEach(function(a){h+=artistCard(a);});
@@ -266,7 +266,7 @@ function artistsHome(){
 function artistPage(name){
  var a=ARTISTS.filter(function(x){return x.name===name;})[0];
  if(!a){location.hash="#/artists";return;}
- setTab("ar");document.title=a.name+" · 音乐收集站";
+ setTab("ar");document.title=a.name+" · 乐之丘";
  var h='<button class="back" id="back">← 返回</button><div class="phead"><div class="cover">'+cover(a.avatar)+'</div><div><h1>'+esc(a.name)+'</h1>'
   +'<div class="meta">'+a.idx.length+' 首 · 1 分 '+a.c1+' · 2 分 '+a.c2+'</div></div></div>'
   +'<div class="chips" id="chips"><button class="chip" data-f="0">全部</button><button class="chip" data-f="1">只看 1 分</button><button class="chip" data-f="2">只看 2 分</button></div>'
