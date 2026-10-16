@@ -53,13 +53,17 @@ h1{font-size:30px;line-height:1.15;font-weight:800;letter-spacing:-.01em;margin:
 .phead h1{margin:0 0 6px;font-size:26px}
 .phead .meta a{color:var(--accent);text-decoration:none;font-weight:600}
 .list{display:grid;grid-template-columns:repeat(auto-fill,minmax(360px,1fr));gap:12px}
-.row{position:relative;display:grid;grid-template-columns:76px minmax(0,1fr);gap:10px 12px;align-items:start;padding:12px;background:var(--card);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);cursor:pointer}
-.row .cover{width:76px;height:76px;border-radius:10px}
-.row[data-k=p]{grid-template-columns:92px minmax(0,1fr)}
-.row[data-k=p] .cover{width:92px;height:92px;border-radius:12px}
-.row[data-k=p] .ph{font-size:30px}
-.row .ph{font-size:24px}
-.row .idx{position:absolute;left:18px;top:18px;z-index:1;min-width:20px;height:20px;line-height:20px;padding:0 6px;border-radius:6px;background:rgba(15,10,5,.72);color:#f6ecd9;font-weight:800;font-size:11px;text-align:center}
+.row{position:relative;display:grid;grid-template-columns:var(--rc) minmax(0,1fr);gap:6px 14px;--rc:120px;align-items:start;padding:12px;background:var(--card);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);cursor:pointer}
+.row .cover{width:var(--rc);height:var(--rc);border-radius:12px;grid-row:1/3}
+.row .ph{font-size:34px}
+.row .info{grid-column:2}
+.row .acts{grid-column:2;grid-row:2;gap:6px;flex-wrap:wrap;justify-content:flex-start;align-items:center;align-self:end}
+.row .acts>.btn,.row .acts>.nebox{flex:0 0 auto;min-width:0}
+.row .acts .btn{height:28px;padding:0 13px;font-size:12.5px;font-weight:700;letter-spacing:.02em;box-shadow:0 1px 4px rgba(0,0,0,.28)}
+.row .acts .btn.b-off,.row .acts .btn.b-yt{box-shadow:none}
+.row .nehint{display:none}
+@media(min-width:621px){.row{--rc:132px}}
+.row .idx{position:absolute;left:20px;top:20px;z-index:1;min-width:20px;height:20px;line-height:20px;padding:0 6px;border-radius:6px;background:rgba(15,10,5,.72);color:#f6ecd9;font-weight:800;font-size:11px;text-align:center}
 .info{min-width:0}
 .t{font-weight:700;font-size:16px;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .a{color:var(--text);opacity:.82;font-size:13.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:1px}
@@ -147,11 +151,6 @@ body{padding-bottom:max(28px,env(safe-area-inset-bottom))}
 .rt{display:inline-block;border-radius:999px;padding:1px 9px;font-size:11.5px;font-weight:800;margin-right:6px}
 .rt1{background:var(--sp);color:var(--sp-t)}
 .rt2{background:#d4a017;color:#1a1400}
-.row.col{grid-template-columns:92px minmax(0,1fr);gap:4px 12px;padding:12px}
-.row.col .cover{grid-row:1/3;width:92px;height:92px;border-radius:12px}
-.row.col .acts{grid-column:2;gap:6px;flex-wrap:nowrap;margin-top:2px}
-.row.col .acts>.btn,.row.col .acts>.nebox{flex:0 0 auto;min-width:0}
-.row.col .acts .btn{padding:5px 12px;font-size:12px;font-weight:700}
 .row.col .nehint{display:none}
 .row.col .why{font-size:12.5px;line-height:1.5;margin-top:5px;color:var(--sub)}
 .row.col .why b{font-size:12px}
@@ -328,9 +327,9 @@ function plCover(p){
 }
 /* ---------- buttons (data-kind drives the app-launch logic) ---------- */
 function skey(s,p,i){var m=/track\/(\w+)/.exec(s.spotify||"");return m?m[1]:(p?"pl-"+p.id+"-"+i:"r-"+i);}
-function btnSp(s){return s.spotify?'<a class="btn b-sp" data-kind="sp" data-stop href="'+esc(s.spotify)+'" target="_blank" rel="noopener noreferrer">在 Spotify 收听</a>':'<span class="btn b-off">Spotify 暂无</span>';}
-function btnNe(s){var l=s.netease&&LinkKit.neLinks(s.netease);return l?'<span class="nebox"><a class="btn b-ne" data-kind="ne" data-stop data-app="'+esc(l.app)+'" data-web="'+esc(l.web)+'" href="'+esc(l.desk)+'" title="电脑端会先打开网页版" target="_blank" rel="noopener noreferrer">在网易云收听</a><small class="nehint">电脑端会先打开网页版</small></span>':'<span class="btn b-off">网易云暂无</span>';}
-function btnAlt(s){return s.alt_url?'<a class="btn b-yt" data-stop href="'+esc(s.alt_url)+'" target="_blank" rel="noopener noreferrer">YouTube 备选</a>':'';}
+function btnSp(s,m){return s.spotify?'<a class="btn b-sp" data-kind="sp" data-stop href="'+esc(s.spotify)+'" target="_blank" rel="noopener noreferrer">'+(m?"Spotify":"在 Spotify 收听")+'</a>':'<span class="btn b-off">Spotify 暂无</span>';}
+function btnNe(s,m){var l=s.netease&&LinkKit.neLinks(s.netease);return l?'<span class="nebox"><a class="btn b-ne" data-kind="ne" data-stop data-app="'+esc(l.app)+'" data-web="'+esc(l.web)+'" href="'+esc(l.desk)+'" title="电脑端会先打开网页版" target="_blank" rel="noopener noreferrer">'+(m?"网易云":"在网易云收听")+'</a><small class="nehint">电脑端会先打开网页版</small></span>':'<span class="btn b-off">网易云暂无</span>';}
+function btnAlt(s){return s.alt_url?'<a class="btn b-yt" data-stop href="'+esc(s.alt_url)+'" target="_blank" rel="noopener noreferrer">YouTube</a>':'';}
 /* ---------- rows ---------- */
 function rowHtml(p,s,i,showPl){
  var yt=ytTime(p,s);
@@ -339,7 +338,7 @@ function rowHtml(p,s,i,showPl){
   +'<div class="cover">'+cover(s)+'</div>'
   +'<div class="info"><div class="t">'+esc(s.title)+'</div><div class="a">'+esc(s.artist)+'</div>'
   +'<div class="al">'+esc(s.album)+(s.year?' · '+esc(s.year):'')+(showPl?'<span class="tag">歌单：'+esc(p.name)+'</span>':'')+'</div>'+gRow(s,2)+'</div>'
-  +'<div class="acts">'+btnSp(s)+btnNe(s)+(s.spotify?'':btnAlt(s))+'</div></div>';
+  +'<div class="acts">'+btnSp(s,1)+btnNe(s,1)+(s.spotify?'':btnAlt(s))+'</div></div>';
 }
 /* ---------- YouTube live ---------- */
 function vfmt(n){if(!n)return"";return n>=1e8?(n/1e8).toFixed(1)+" 亿":n>=1e4?Math.round(n/1e4)+" 万":String(n);}
@@ -372,7 +371,7 @@ function ratedRow(r,idx,showArtist){
   +(showArtist?'<div class="a">'+esc(r.artist)+'</div>':'')
   +'<div class="al">'+esc(r.album)+(r.year?' · '+esc(r.year):'')+'</div>'
   +'<div class="al2"><span class="rt rt'+r.rating+'">'+RL[r.rating]+'</span>'+(r.rated_date?'评于 '+esc(r.rated_date):'')+'</div>'+gRow(r,2)+(r.intro_found?whyHtml(r.intro):'')+'</div>'
-  +'<div class="acts">'+btnSp(r)+btnNe(r)+'</div>'
+  +'<div class="acts">'+btnSp(r,1)+btnNe(r,1)+'</div>'
   +'<div class="introbox">'+introHtml(r)+liveDet(r)+'</div></div>';
 }
 /* ---------- artists ---------- */
@@ -709,7 +708,7 @@ function dailyRowHtml(b,s){
  return '<div class="row" data-k="d" data-sk="'+esc("d-"+b.date+"-"+s.id)+'"><div class="cover">'+cover(s)+'</div>'
   +'<div class="info"><div class="t">'+esc(s.title)+'</div><div class="a">'+esc(s.artist)+'</div>'
   +'<div class="al">'+esc(s.album||"")+(s.year?' · '+esc(s.year):'')+'<span class="tag">每日 · '+esc(dayLabel(b.date).full)+'</span></div>'+gRow(s,2)+'</div>'
-  +'<div class="acts">'+btnSp(s)+btnNe(s)+'</div></div>';
+  +'<div class="acts">'+btnSp(s,1)+btnNe(s,1)+'</div></div>';
 }
 function search(t){
  var raw=t.trim(),k=raw.toLowerCase(),h="",c=0;
