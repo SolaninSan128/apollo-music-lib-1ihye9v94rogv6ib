@@ -12,78 +12,85 @@
 <link rel="manifest" href="manifest.webmanifest">
 <title>Harmonia 的八音盒</title>
 <style>
-:root{--bg:#f4f5f7;--card:#fff;--card2:#eef0f3;--text:#1c1f24;--sub:#6b7280;--line:#e2e5ea;--accent:#1db954;--accent-t:#fff;--ne:#d43c33;--shadow:0 1px 3px rgba(0,0,0,.08)}
-:root[data-theme=dark]{--bg:#121417;--card:#1b1e23;--card2:#252930;--text:#e8eaed;--sub:#9aa1ab;--line:#2c3037;--accent:#1db954;--accent-t:#06210f;--ne:#e5574e;--shadow:0 1px 3px rgba(0,0,0,.5)}
+:root{--bg:#f6f1e8;--card:#fffdf8;--card2:#efe7da;--text:#2a2118;--sub:#7b6f5f;--line:#e2d8c6;--accent:#d4512b;--accent-t:#fff;--gold:#a9780d;--sp:#17a24a;--sp-t:#fff;--ne:#d4402f;--shadow:0 1px 2px rgba(60,40,10,.06);--r:14px}
+:root[data-theme=dark]{--bg:#14110d;--card:#1d1913;--card2:#28221a;--text:#f2eadd;--sub:#a99f8f;--line:#352d22;--accent:#e2663f;--accent-t:#1a0e08;--gold:#dbab3b;--sp:#1fbd5a;--sp-t:#04170b;--ne:#e5574a;--shadow:0 1px 2px rgba(0,0,0,.45)}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0}
-body{background:var(--bg);color:var(--text);font:15px/1.55 -apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei","Noto Sans CJK SC","Noto Sans JP",sans-serif;padding-bottom:env(safe-area-inset-bottom)}
+body{background:var(--bg);color:var(--text);font:15px/1.55 -apple-system,BlinkMacSystemFont,"PingFang SC","HarmonyOS Sans SC","Noto Sans SC","Noto Sans CJK SC","Source Han Sans SC","Microsoft YaHei","Hiragino Sans GB","Noto Sans JP",sans-serif;padding-bottom:env(safe-area-inset-bottom);-webkit-font-smoothing:antialiased}
 a{color:inherit}
-header{position:sticky;top:0;z-index:20;background:var(--bg);border-bottom:1px solid var(--line);padding-top:env(safe-area-inset-top,0px)}
-.bar{max-width:980px;margin:0 auto;padding:calc(12px) 16px 10px;display:flex;gap:10px;align-items:center}
-.logo{font-weight:700;font-size:17px;white-space:nowrap;cursor:pointer}
-.search{flex:1;min-width:0;display:flex;align-items:center;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:0 10px}
-.search input{flex:1;min-width:0;border:0;outline:0;background:transparent;color:var(--text);font:inherit;padding:9px 4px}
-.icon-btn{border:1px solid var(--line);background:var(--card);color:var(--text);border-radius:10px;width:38px;height:38px;font-size:16px;cursor:pointer}
-.reload-btn{border-radius:50%;flex:none;display:inline-flex;align-items:center;justify-content:center;padding:0}
-.reload-btn svg{width:20px;height:20px;display:block}
+header{position:sticky;top:0;z-index:20;background:var(--bg);padding-top:env(safe-area-inset-top,0px)}
+.bar{max-width:1120px;margin:0 auto;padding:10px 16px 8px;display:flex;gap:8px;align-items:center}
+.logo{font-weight:800;font-size:17px;white-space:nowrap;cursor:pointer;letter-spacing:.01em}
+.logo::first-letter{color:var(--gold)}
+.search{flex:1;min-width:0;display:flex;align-items:center;gap:6px;background:var(--card);border:1px solid var(--line);border-radius:999px;padding:0 12px;font-size:13px}
+.search input{flex:1;min-width:0;border:0;outline:0;background:transparent;color:var(--text);font:inherit;font-size:15px;padding:8px 2px}
+.icon-btn{border:1px solid var(--line);background:var(--card);color:var(--text);border-radius:50%;width:36px;height:36px;font-size:15px;cursor:pointer;flex:none;display:inline-flex;align-items:center;justify-content:center;padding:0}
+.reload-btn{flex:none}
+.reload-btn svg{width:18px;height:18px;display:block;color:var(--gold)}
 .reload-btn:active{transform:rotate(60deg);transition:transform .2s}
 .logo-wrap{display:flex;align-items:center;gap:8px;flex:none}
 
-main{max-width:980px;margin:0 auto;padding:16px}
-h1{font-size:22px;margin:4px 0 14px}
-.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:14px}
-.pl{background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;cursor:pointer;box-shadow:var(--shadow);transition:transform .15s}
-.pl:hover{transform:translateY(-2px)}
-.pl .body{padding:12px 14px 14px}
-.pl .name{font-weight:650;font-size:16px;line-height:1.35;margin-bottom:4px}
+main{max-width:1120px;margin:0 auto;padding:6px 16px 20px}
+.eyebrow{color:var(--gold);font-size:12px;font-weight:800;letter-spacing:.14em;margin:14px 0 4px}
+h1{font-size:30px;line-height:1.15;font-weight:800;letter-spacing:-.01em;margin:0 0 6px}
+.lead{color:var(--sub);font-size:13.5px;margin:0 0 16px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:12px}
+.pl{display:flex;gap:14px;align-items:stretch;background:var(--card);border:1px solid var(--line);border-radius:var(--r);overflow:hidden;cursor:pointer;box-shadow:var(--shadow);transition:border-color .15s,transform .15s}
+.pl:hover,.dday:hover,.ac:hover,.row:hover{border-color:color-mix(in srgb,var(--accent) 55%,var(--line))}
+.pl:active,.dday:active,.ac:active{transform:scale(.99)}
+.pl .cover{width:112px;flex:none;aspect-ratio:1/1;align-self:flex-start;margin:12px 0 12px 12px;border-radius:10px}
+.pl .body{padding:12px 14px 12px 0;min-width:0;flex:1}
+.pl .name{font-weight:800;font-size:17px;line-height:1.3;margin-bottom:3px}
 .meta{color:var(--sub);font-size:13px}
-.desc{color:var(--sub);font-size:13px;margin-top:6px}
+.desc{color:var(--sub);font-size:13px;margin-top:6px;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
 .cover{position:relative;width:100%;aspect-ratio:1/1;background:var(--card2);overflow:hidden}
 .cover.collage{display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr}
 .cover img,.ph{width:100%;height:100%;object-fit:cover;display:block}
-.ph{display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,.85);font-size:34px}
+.ph{display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,.85);font-size:30px}
 .back{border:0;background:none;color:var(--accent);font:inherit;font-weight:600;cursor:pointer;padding:6px 0;margin-bottom:6px}
-.phead{display:flex;gap:16px;align-items:flex-start;margin-bottom:16px}
-.phead .cover{width:120px;flex:none;border-radius:12px}
-.phead h1{margin:0 0 6px}
-.phead .meta a{color:var(--accent);text-decoration:none}
-.list{background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden}
-.row{display:flex;gap:12px;align-items:center;padding:10px 12px;border-top:1px solid var(--line);cursor:pointer}
-.row:first-child{border-top:0}
-.row:hover{background:var(--card2)}
-.row .cover{width:52px;height:52px;flex:none;border-radius:8px}
-.row .ph{font-size:20px}
-.info{flex:1;min-width:0}
-.t{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.a,.al{color:var(--sub);font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.idx{width:18px;text-align:center;color:var(--sub);font-size:13px;flex:none}
-.acts{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;align-items:center;flex:none;max-width:300px}
-.btn{display:inline-block;border-radius:999px;padding:5px 11px;font-size:13px;font-weight:600;text-decoration:none;white-space:nowrap;border:1px solid transparent;cursor:pointer;font-family:inherit}
-.b-sp{background:var(--accent);color:var(--accent-t)}
+.phead{display:flex;gap:14px;align-items:flex-start;margin:6px 0 14px}
+.phead .cover{width:104px;flex:none;border-radius:12px}
+.phead h1{margin:0 0 6px;font-size:26px}
+.phead .meta a{color:var(--accent);text-decoration:none;font-weight:600}
+.list{display:grid;grid-template-columns:repeat(auto-fill,minmax(360px,1fr));gap:12px}
+.row{position:relative;display:grid;grid-template-columns:76px minmax(0,1fr);gap:10px 12px;align-items:start;padding:12px;background:var(--card);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);cursor:pointer}
+.row .cover{width:76px;height:76px;border-radius:10px}
+.row .ph{font-size:24px}
+.row .idx{position:absolute;left:18px;top:18px;z-index:1;min-width:20px;height:20px;line-height:20px;padding:0 6px;border-radius:6px;background:rgba(15,10,5,.72);color:#f6ecd9;font-weight:800;font-size:11px;text-align:center}
+.info{min-width:0}
+.t{font-weight:700;font-size:16px;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.a{color:var(--text);opacity:.82;font-size:13.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:1px}
+.al{color:var(--sub);font-size:12.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:1px}
+.why{font-size:13px;line-height:1.5;margin-top:6px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.why b{color:var(--gold);font-weight:800;margin-right:6px}
+.acts{grid-column:1/-1;display:flex;gap:6px;flex-wrap:wrap;align-items:stretch}
+.acts>.btn,.acts>.nebox{flex:1 1 0;min-width:84px}
+.btn{display:inline-flex;align-items:center;justify-content:center;border-radius:999px;padding:8px 12px;font-size:13px;font-weight:700;text-decoration:none;white-space:nowrap;border:1px solid transparent;cursor:pointer;font-family:inherit;line-height:1.2}
+.b-sp{background:var(--sp);color:var(--sp-t)}
 .b-ne{background:var(--ne);color:#fff}
 .b-yt{background:var(--card2);color:var(--text);border-color:var(--line)}
-.b-off{background:var(--card2);color:var(--sub);cursor:default}
+.b-off{background:var(--card2);color:var(--sub);cursor:default;font-weight:600}
 .tm{font-variant-numeric:tabular-nums}
-.tag{display:inline-block;font-size:11px;color:var(--sub);background:var(--card2);border-radius:6px;padding:1px 6px;margin-left:6px;font-weight:500}
+.tag{display:inline-block;font-size:11px;color:var(--sub);background:var(--card2);border-radius:6px;padding:1px 6px;margin-left:6px;font-weight:600}
 .empty{color:var(--sub);padding:30px 10px;text-align:center}
-.svbody .cover{width:min(300px,100%);margin:0 auto 14px;border-radius:12px}
-.svbody h2{margin:0 0 2px;font-size:19px}
-dl{margin:12px 0;display:grid;grid-template-columns:64px 1fr;gap:6px 10px;font-size:14px}
-dt{color:var(--sub)}dd{margin:0}
-.note{background:var(--card2);border-radius:10px;padding:9px 11px;font-size:13.5px;margin:8px 0}
-.links{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
-footer{max-width:980px;margin:10px auto 30px;padding:0 16px;color:var(--sub);font-size:12px;text-align:center}
+.svbody .cover{width:min(300px,100%);margin:6px auto 16px;border-radius:18px;box-shadow:0 10px 30px rgba(0,0,0,.35)}
+.svbody .eyebrow{margin:0 0 4px}
+.svbody h2{margin:0 0 2px;font-size:25px;line-height:1.2;font-weight:800;letter-spacing:-.01em}
+.svbody .meta{font-size:14.5px}
+dl{margin:14px 0;display:grid;grid-template-columns:64px 1fr;gap:6px 10px;font-size:14px;padding:12px 14px;background:var(--card);border:1px solid var(--line);border-radius:var(--r)}
+dt{color:var(--gold);font-weight:700;font-size:13px}dd{margin:0}
+.note{background:var(--card2);border-radius:12px;padding:10px 12px;font-size:13.5px;margin:8px 0}
+.note b,.intro-full b,.dintro b,.introbox .txt b{color:var(--gold)}
+.links{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+.links>.btn,.links>.nebox{flex:1 1 0;min-width:96px}
+footer{max-width:1120px;margin:6px auto 30px;padding:0 16px;color:var(--sub);font-size:12px;text-align:center}
 @media(max-width:620px){
- .row{flex-wrap:wrap}
- .acts{max-width:none;width:100%;justify-content:flex-start;padding-left:30px}
+ h1{font-size:28px}
  .phead .cover{width:84px}
- h1{font-size:20px}
- .grid{grid-template-columns:repeat(2,1fr);gap:10px}
+ .phead h1{font-size:22px}
  .logo span{display:none}
+ .grid,.list{grid-template-columns:1fr}
 }
-@media(max-width:380px){.grid{grid-template-columns:1fr}}
-
-
 .hback{display:none;flex:none;align-items:center;justify-content:center;padding:0}
 .hback.show{display:inline-flex}
 .hback svg{width:20px;height:20px;display:block}
@@ -91,89 +98,88 @@ footer{max-width:980px;margin:10px auto 30px;padding:0 16px;color:var(--sub);fon
 .sv.on{transform:none;visibility:visible}
 .sv.anim{transition:transform .26s cubic-bezier(.2,.8,.2,1),visibility 0s linear .26s}
 .sv.on.anim{transition:transform .26s cubic-bezier(.2,.8,.2,1),visibility 0s}
-.svbar{position:sticky;top:0;z-index:2;background:var(--bg);border-bottom:1px solid var(--line);padding:calc(env(safe-area-inset-top,0px) + 12px) 16px 10px;display:flex;align-items:center;gap:10px}
-.svbar .svt{flex:1;min-width:0;font-weight:700;font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.svbody{max-width:560px;margin:0 auto;padding:16px 16px calc(env(safe-area-inset-bottom,0px) + 40px)}
+.svbar{position:sticky;top:0;z-index:2;background:var(--bg);padding:calc(env(safe-area-inset-top,0px) + 10px) 16px 8px;display:flex;align-items:center;gap:10px}
+.svbar .svt{flex:1;min-width:0;font-weight:800;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.svbody{max-width:560px;margin:0 auto;padding:6px 16px calc(env(safe-area-inset-bottom,0px) + 40px)}
 @media(prefers-reduced-motion:reduce){.sv.anim,.sv.on.anim{transition:none}}
-.tabs{max-width:980px;margin:0 auto;padding:0 16px 8px;display:flex;gap:8px}
-.tab{border:1px solid var(--line);background:var(--card);color:var(--sub);border-radius:999px;padding:5px 16px;font:inherit;font-weight:600;cursor:pointer}
-.tab.on{background:var(--accent);color:var(--accent-t);border-color:var(--accent)}
+.tabs{max-width:1120px;margin:0 auto;padding:0 16px 10px;display:flex;gap:8px;align-items:center;border-bottom:1px solid var(--line)}
+.tab{border:1px solid var(--line);background:transparent;color:var(--text);border-radius:999px;padding:6px 16px;font:inherit;font-size:14px;font-weight:700;cursor:pointer}
+.tab.on,.tab-daily.on{background:var(--accent);color:var(--accent-t);border-color:var(--accent)}
 .avatar{width:100%;aspect-ratio:1/1;border-radius:0}
 .ac .cover img,.ac .cover .ph,.phead .cover.artist-av img{object-fit:cover}
-.agrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:14px}
-.ac{background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;cursor:pointer;box-shadow:var(--shadow);transition:transform .15s}
-.ac:hover{transform:translateY(-2px)}
+.agrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(168px,1fr));gap:12px}
+.ac{background:var(--card);border:1px solid var(--line);border-radius:var(--r);overflow:hidden;cursor:pointer;box-shadow:var(--shadow);transition:border-color .15s,transform .15s}
 .ac .body{padding:10px 12px 12px}
-.ac .name{font-weight:650;line-height:1.35;margin-bottom:2px}
+.ac .name{font-weight:800;line-height:1.3;margin-bottom:2px}
+@media(max-width:620px){.agrid{grid-template-columns:repeat(2,1fr);gap:10px}}
+.phead .cover.artist-av{border-radius:50%;width:92px}
 .chips{display:flex;gap:8px;margin:0 0 12px;flex-wrap:wrap}
-.chip{border:1px solid var(--line);background:var(--card);color:var(--text);border-radius:999px;padding:4px 13px;font:inherit;font-size:13px;cursor:pointer}
-.chip.on{background:var(--text);color:var(--bg);border-color:var(--text)}
-.rt{display:inline-block;border-radius:6px;padding:1px 8px;font-size:12px;font-weight:700;margin-right:6px}
-.rt1{background:rgba(29,185,84,.16);color:#14883c}
-.rt2{background:rgba(240,170,20,.2);color:#a8700a}
-:root[data-theme=dark] .rt1{color:#4ade80}
-:root[data-theme=dark] .rt2{color:#fbbf24}
-.row.col{flex-wrap:wrap}
-.row.col .al{white-space:normal;overflow:visible}
-.row.col .acts{max-width:none}
-.introbox{width:100%;padding:2px 0 4px 64px}
-.introbox details{background:var(--card2);border-radius:10px;padding:6px 10px;font-size:13.5px}
-.introbox summary{cursor:pointer;color:var(--sub);font-weight:600}
-.introbox .txt{margin-top:6px;white-space:normal}
-.live{margin-top:8px}.live .lh{font-weight:700;font-size:13.5px;margin:0 0 6px}
-.live a.lv{display:block;background:var(--card2);border:1px solid var(--line,#2a2f3a);border-radius:10px;padding:8px 10px;margin:0 0 6px;text-decoration:none;color:inherit}
+.chip{border:1px solid var(--line);background:transparent;color:var(--text);border-radius:999px;padding:5px 14px;font:inherit;font-size:13px;font-weight:600;cursor:pointer}
+.chip.on{background:var(--accent);color:var(--accent-t);border-color:var(--accent)}
+.rt{display:inline-block;border-radius:999px;padding:1px 9px;font-size:11.5px;font-weight:800;margin-right:6px}
+.rt1{background:var(--sp);color:var(--sp-t)}
+.rt2{background:#d4a017;color:#1a1400}
+.introbox{grid-column:1/-1}
+.introbox details,.dintro details{background:var(--card2);border-radius:12px;padding:8px 12px;font-size:13.5px}
+.introbox summary,.dintro summary{cursor:pointer;color:var(--gold);font-weight:700}
+.introbox .txt{margin-top:6px;white-space:normal;line-height:1.65}
+.live{margin-top:8px}.live .lh{font-weight:800;font-size:13.5px;margin:0 0 6px;color:var(--gold)}
+.live a.lv{display:block;background:var(--card2);border:1px solid var(--line);border-radius:12px;padding:9px 11px;margin:0 0 6px;text-decoration:none;color:inherit}
 .live a.lv:hover{border-color:#ff4d4d}
-.live .lt{font-size:13.5px;font-weight:600;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.live .lt{font-size:13.5px;font-weight:700;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .live .lm{font-size:12px;color:var(--sub);margin-top:2px}
-.live .lm b{color:#ff6b6b;font-weight:600}.live .lm .un{color:#e0a64a}
+.live .lm b{color:#ff6b6b;font-weight:700}.live .lm .un{color:#e0a64a}
 .live .ln{font-size:12px;color:var(--sub);margin-top:2px}
 .live .lx{font-size:12.5px;color:var(--sub)}
 .introbox .miss{color:var(--sub);font-size:13px}
-.sec-h{font-size:15px;color:var(--sub);margin:18px 0 8px;font-weight:600}
-.nebox{display:inline-flex;flex-direction:column;align-items:center;gap:1px}
-.nehint{font-size:10px;color:var(--sub);line-height:1.2}
-html.mobile .nehint{display:none}
-
-.tab-daily.on{background:#7c5cff;color:#fff;border-color:#7c5cff}
-.dday{background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;cursor:pointer;box-shadow:var(--shadow);transition:transform .15s;margin:0 0 12px}
-.dday:hover{transform:translateY(-2px)}
+.sec-h{font-size:13px;color:var(--gold);margin:20px 0 8px;font-weight:800;letter-spacing:.1em}
+.nebox{display:inline-flex;flex-direction:column;align-items:stretch;gap:1px}
+.nebox .btn{width:100%}
+.nehint{display:none}
+.dday{background:var(--card);border:1px solid var(--line);border-radius:var(--r);overflow:hidden;cursor:pointer;box-shadow:var(--shadow);transition:border-color .15s,transform .15s}
 .dday .body{padding:12px 14px 14px}
-.dday .name{font-weight:650;font-size:16px;line-height:1.35;margin-bottom:4px}
-.dday .preview{display:flex;gap:6px;margin-top:10px}
-.dday .preview .cover{width:48px;height:48px;border-radius:8px;flex:none;overflow:hidden}
+.dday .meta{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.dday .name{font-weight:800;font-size:17px;line-height:1.35;margin-bottom:2px}
+.dday .preview{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-top:10px}
+.dday .preview .cover{width:100%;border-radius:8px;overflow:hidden}
 .dday .preview .ph{font-size:16px}
-.dcard{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px;margin:0 0 12px;box-shadow:var(--shadow)}
-.dcard .dtop{display:flex;gap:12px;align-items:flex-start;cursor:pointer}
-.dcard .cover{width:64px;height:64px;flex:none;border-radius:10px}
-.dcard .dmeta .t{font-size:15px}
-.badge{display:inline-block;font-size:11px;font-weight:700;padding:2px 8px;border-radius:999px;margin-right:6px}
-.badge.k1{background:rgba(124,92,255,.15);color:#7c5cff}
-.rates{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap}
-.rate{border:0;border-radius:999px;padding:6px 12px;font:inherit;font-weight:650;font-size:12.5px;cursor:pointer;line-height:1.2;opacity:.5;transition:opacity .15s,transform .1s,box-shadow .15s}
+.dcard{position:relative;background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:12px;box-shadow:var(--shadow)}
+.dcard .dtop{display:grid;grid-template-columns:76px minmax(0,1fr);gap:12px;align-items:start;cursor:pointer;position:relative}
+.dcard .dtop .cover{width:76px;height:76px;border-radius:10px}
+.dcard .dmeta .t{font-size:16px}
+.dcard .idx{position:absolute;left:6px;top:6px;z-index:1;min-width:20px;height:20px;line-height:20px;padding:0 6px;border-radius:6px;background:rgba(15,10,5,.72);color:#f6ecd9;font-weight:800;font-size:11px;text-align:center}
+.dcard .acts{margin-top:10px}
+.badge{display:inline-block;font-size:11px;font-weight:700;padding:1px 8px;border-radius:999px;margin-right:6px}
+.badge.k1{background:color-mix(in srgb,var(--gold) 18%,transparent);color:var(--gold)}
+.rates{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:8px}
+.rate{border:0;border-radius:999px;padding:8px 6px;font:inherit;font-weight:800;font-size:13px;cursor:pointer;line-height:1.2;opacity:.5;transition:opacity .15s,transform .1s,box-shadow .15s}
 .rate:active{transform:scale(.97)}
-.rate.r1{background:#1db954;color:#041a0c}
-.rate.r2{background:#d4a017;color:#1a1400}
-.rate.r3{background:#4b5563;color:#f8fafc}
-.rate.on{opacity:1;box-shadow:0 0 0 2px var(--bg),0 0 0 3.5px rgba(255,255,255,.35)}
-.rate.r1.on{box-shadow:0 0 0 2px var(--bg),0 0 0 3.5px #1db954}
-.rate.r2.on{box-shadow:0 0 0 2px var(--bg),0 0 0 3.5px #d4a017}
-.rate.r3.on{box-shadow:0 0 0 2px var(--bg),0 0 0 3.5px #4b5563}
-.syncbar{position:sticky;top:calc(env(safe-area-inset-top,0px) + 100px);z-index:15;display:none;align-items:center;gap:10px;flex-wrap:wrap;background:linear-gradient(135deg,#2f2163,#5b3cc4);color:#fff;border-radius:12px;padding:10px 12px;margin:0 0 14px;box-shadow:var(--shadow)}
-.syncbar.on{display:flex}
-.syncbar .sx{flex:1;min-width:140px;font-size:13px;line-height:1.35}
-.syncbar .sx b{font-weight:700}
-.syncbar .sbtns{display:flex;gap:6px;flex-wrap:wrap}
-.sbtn{border:0;border-radius:999px;padding:7px 12px;font:inherit;font-weight:700;font-size:12.5px;cursor:pointer;background:#fff;color:#3d2b7a}
-.sbtn.ghost{background:rgba(255,255,255,.18);color:#fff}
-.dintro{background:var(--card2);border-radius:12px;padding:10px 12px;margin-top:10px;font-size:13.5px;white-space:pre-wrap}
-.dintro details summary{cursor:pointer;color:var(--sub);font-weight:600}
-.pill-rated{font-size:11px;font-weight:700;margin-left:6px;padding:1px 7px;border-radius:999px;vertical-align:middle}
-.pill-rated.p1{background:#1db954;color:#041a0c}
-.pill-rated.p2{background:#d4a017;color:#1a1400}
-.pill-rated.p3{background:#4b5563;color:#f8fafc}
-.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:rgba(20,20,20,.9);color:#fff;padding:8px 16px;border-radius:999px;font-size:13px;z-index:80;display:none}
-.intro-full{background:var(--card2);border-radius:10px;padding:9px 11px;font-size:13.5px;margin:8px 0}
-@media(max-width:620px){.row.col .acts{padding-left:0}.introbox{padding-left:0}.agrid{grid-template-columns:repeat(2,1fr);gap:10px}}
+.rate.r1{background:#1fbd5a;color:#04170b}
+.rate.r2{background:#d9a21b;color:#1a1300}
+.rate.r3{background:#5b6472;color:#f8fafc}
+.rate.on{opacity:1}
+.rate.r1.on{box-shadow:0 0 0 2px var(--card),0 0 0 3.5px #1fbd5a}
+.rate.r2.on{box-shadow:0 0 0 2px var(--card),0 0 0 3.5px #d9a21b}
+.rate.r3.on{box-shadow:0 0 0 2px var(--card),0 0 0 3.5px #8d96a5}
+.svbody .rates{margin:12px 0}
+.syncdot{margin-left:auto;display:none;align-items:center;gap:5px;border:0;background:transparent;color:var(--sub);font:inherit;font-size:11px;padding:2px 4px;cursor:pointer;align-self:center}
+.syncdot.show{display:inline-flex}
+.syncdot i{width:7px;height:7px;border-radius:50%;background:#1fbd5a;display:inline-block}
+.syncdot.wait i{background:#d9a21b}.syncdot.off i{background:#e5484d}
+.bk{margin:18px 0 8px;color:var(--sub);font-size:12.5px}
+.bk summary{cursor:pointer;font-weight:700}
+.bk .bkb{margin-top:8px}
+.bk .rowbtns{display:flex;gap:6px;flex-wrap:wrap}
+.sbtn2{border:1px solid var(--line);background:var(--card2);color:var(--text);border-radius:999px;padding:6px 12px;font:inherit;font-size:12.5px;cursor:pointer}
+.dintro{margin-top:8px;font-size:13.5px;white-space:normal}
+.dintro .txt{margin-top:6px;line-height:1.65}
+.pill-rated{font-size:11px;font-weight:800;margin-left:6px;padding:1px 8px;border-radius:999px;vertical-align:middle}
+.pill-rated.p1{background:#1fbd5a;color:#04170b}
+.pill-rated.p2{background:#d9a21b;color:#1a1300}
+.pill-rated.p3{background:#5b6472;color:#f8fafc}
+.toast{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + 24px);transform:translateX(-50%);background:rgba(20,16,10,.92);color:#f6ecd9;padding:9px 18px;border-radius:999px;font-size:13px;font-weight:600;z-index:80;display:none}
+.intro-full{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px;font-size:14px;line-height:1.7;margin:10px 0}
+@media(min-width:900px){h1{font-size:34px}.svbody{max-width:640px}}
 </style>
 </head>
 <body>
@@ -181,10 +187,10 @@ html.mobile .nehint{display:none}
  <button class="icon-btn hback" id="hback" type="button" title="返回上一页" aria-label="返回上一页"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></button>
  <div class="logo-wrap"><div class="logo" id="logo">♪<span> Harmonia 的八音盒</span></div>
  <button class="icon-btn reload-btn" id="reload" type="button" title="刷新页面" aria-label="刷新页面"><svg viewBox="0 0 24 24" aria-hidden="true" fill="currentColor"><path d="M12 2.2l1.7 6.6L20.5 12l-6.8 3.2L12 21.8l-1.7-6.6L3.5 12l6.8-3.2L12 2.2zm0 5.3l-.7 2.7-2.8 1.3 2.8 1.3.7 2.7.7-2.7 2.8-1.3-2.8-1.3L12 7.5z"/></svg></button></div>
- <label class="search"><span>🔍</span><input id="q" type="search" placeholder="搜索歌名、歌手" autocomplete="off"></label>
+ <label class="search"><svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></svg><input id="q" type="search" placeholder="搜索歌名、歌手" autocomplete="off"></label>
  <button class="icon-btn" id="theme" title="切换深色/浅色" aria-label="切换深色或浅色">◐</button>
 </div>
-<div class="tabs"><button class="tab on" id="tab-pl" data-tab="pl">歌单</button><button class="tab tab-daily" id="tab-daily" data-tab="daily">每日推荐</button><button class="tab" id="tab-ar" data-tab="ar">歌手</button></div>
+<div class="tabs"><button class="tab on" id="tab-pl" data-tab="pl">歌单</button><button class="tab tab-daily" id="tab-daily" data-tab="daily">每日推荐</button><button class="tab" id="tab-ar" data-tab="ar">歌手</button><button type="button" class="syncdot ok" id="syncdot" data-show="0" title="评分同步状态（点击重试）"><i></i><span class="t">已同步</span></button></div>
 </header>
 <main id="app"></main>
 <footer id="foot"></footer>
@@ -232,13 +238,22 @@ var RATED=RATED_ALL.filter(function(r){return r.rating===1;}); // 歌手分区�
 var ARTMETA={};(DATA.library.artists||[]).forEach(function(a){ARTMETA[a.name]=a;});
 var app=document.getElementById("app"), q=document.getElementById("q");
 var GR=[["#5b6dee","#c471ed"],["#f7797d","#fbd786"],["#11998e","#38ef7d"],["#fc5c7d","#6a82fb"],["#f09819","#edde5d"],["#4776e6","#8e54e9"]];
-var RL={1:"1 帮我收藏",2:"2 有点意思"};
+var RL={1:"收藏",2:"还不错"};
 function esc(s){return String(s==null?"":s).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];});}
 function hash(s){var h=0;for(var i=0;i<s.length;i++)h=(h*31+s.charCodeAt(i))|0;return Math.abs(h);}
 function ph(seed){var g=GR[hash(seed)%GR.length];return '<div class="ph" style="background:linear-gradient(135deg,'+g[0]+','+g[1]+')">♪</div>';}
 function cover(s){var c=s.cover&&COV[s.cover];return c?'<img loading="lazy" alt="" src="'+c+'">':ph(s.title+s.artist);}
 function fmt(sec){var m=Math.floor(sec/60),s=sec%60;return (m<10?"0":"")+m+":"+(s<10?"0":"")+s;}
 function ytTime(p,s){var u=p.video_url||(p.source&&p.source.url)||"";if(!u||s.time_sec==null||s.time_sec==="")return "";return u+(u.indexOf("?")<0?"?":"&")+"t="+s.time_sec+"s";}
+function eyebrow(s){return '<div class="eyebrow">'+esc(s)+'</div>';}
+function whyOf(intro){
+ var s=String(intro||"").replace(/\r/g,"");if(!s)return"";
+ var m=/\*\*为什么推[^*]*\*\*\s*\n?([\s\S]*?)(?:\n\s*\n|\n\*\*|$)/.exec(s);
+ var x=(m?m[1]:s.split(/\n\s*\n/)[0]).replace(/\*\*/g,"").replace(/^（[^）]*）\s*/,"").replace(/\s+/g," ").trim();
+ if(x.length>70)x=x.slice(0,68)+"…";
+ return x;
+}
+function whyHtml(intro){var w=whyOf(intro);return w?'<div class="why"><b>推荐理由</b>'+esc(w)+'</div>':'';}
 function md(t){return esc(t).replace(/\*\*(.+?)\*\*/g,"<b>$1</b>").replace(/\n/g,"<br>");}
 function plCover(p){
  var withC=p.songs.filter(function(s){return s.cover&&COV[s.cover];});
@@ -250,7 +265,7 @@ function plCover(p){
 /* ---------- buttons (data-kind drives the app-launch logic) ---------- */
 function skey(s,p,i){var m=/track\/(\w+)/.exec(s.spotify||"");return m?m[1]:(p?"pl-"+p.id+"-"+i:"r-"+i);}
 function btnSp(s){return s.spotify?'<a class="btn b-sp" data-kind="sp" data-stop href="'+esc(s.spotify)+'" target="_blank" rel="noopener noreferrer">在 Spotify 收听</a>':'<span class="btn b-off">Spotify 暂无</span>';}
-function btnNe(s){var l=s.netease&&LinkKit.neLinks(s.netease);return l?'<span class="nebox"><a class="btn b-ne" data-kind="ne" data-stop data-app="'+esc(l.app)+'" data-web="'+esc(l.web)+'" href="'+esc(l.desk)+'" target="_blank" rel="noopener noreferrer">在网易云收听</a><small class="nehint">电脑端会先打开网页版</small></span>':'<span class="btn b-off">网易云暂无</span>';}
+function btnNe(s){var l=s.netease&&LinkKit.neLinks(s.netease);return l?'<span class="nebox"><a class="btn b-ne" data-kind="ne" data-stop data-app="'+esc(l.app)+'" data-web="'+esc(l.web)+'" href="'+esc(l.desk)+'" title="电脑端会先打开网页版" target="_blank" rel="noopener noreferrer">在网易云收听</a><small class="nehint">电脑端会先打开网页版</small></span>':'<span class="btn b-off">网易云暂无</span>';}
 function btnAlt(s){return s.alt_url?'<a class="btn b-yt" data-stop href="'+esc(s.alt_url)+'" target="_blank" rel="noopener noreferrer">YouTube 备选</a>':'';}
 /* ---------- rows ---------- */
 function rowHtml(p,s,i,showPl){
@@ -292,125 +307,170 @@ function ratedRow(r,idx,showArtist){
   +'<div class="cover" style="width:52px;height:52px;border-radius:8px;flex:none">'+cover(r)+'</div>'
   +'<div class="info"><div class="t">'+esc(r.title)+'</div>'
   +(showArtist?'<div class="a">'+esc(r.artist)+'</div>':'')
-  +'<div class="al"><span class="rt rt'+r.rating+'">'+RL[r.rating]+'</span>'+esc(r.album)+(r.year?' · '+esc(r.year):'')+(r.rated_date?' · 评于 '+esc(r.rated_date):'')+'</div></div>'
+  +'<div class="al"><span class="rt rt'+r.rating+'">'+RL[r.rating]+'</span>'+esc(r.album)+(r.year?' · '+esc(r.year):'')+(r.rated_date?' · 评于 '+esc(r.rated_date):'')+'</div>'+(r.intro_found?whyHtml(r.intro):'')+'</div>'
   +'<div class="acts">'+btnSp(r)+btnNe(r)+'</div>'
   +'<div class="introbox">'+introHtml(r)+liveDet(r)+'</div></div>';
 }
 /* ---------- artists ---------- */
 
-/* ---------- daily ratings (localStorage) + sync pack ---------- */
+/* ---------- daily ratings: localStorage 保底 + Cloudflare Worker 自动同步 ---------- */
 var LS_KEY="harmonia_daily_ratings_v1";
+var LS_Q="harmonia_sync_queue_v1";
+var SYNC_URL="https://harmonia-ratings.harmonia-box.workers.dev";
 var GH_INBOX="https://github.com/SolaninSan128/harmonia-ratings-inbox/issues/new";
-function loadRates(){try{return JSON.parse(localStorage.getItem(LS_KEY)||"{}")||{};}catch(e){return {};}}
-function saveRates(o){try{localStorage.setItem(LS_KEY,JSON.stringify(o));}catch(e){}}
+function lsGet(k){try{return JSON.parse(localStorage.getItem(k)||"{}")||{};}catch(e){return {};}}
+function lsSet(k,o){try{localStorage.setItem(k,JSON.stringify(o));}catch(e){}}
+function loadRates(){return lsGet(LS_KEY);}
+function saveRates(o){lsSet(LS_KEY,o);}
+function loadQ(){return lsGet(LS_Q);}
+function saveQ(o){lsSet(LS_Q,o);}
 function rateKey(date,id){return date+"|"+id;}
-function getRate(date,id){var o=loadRates();if(o[rateKey(date,id)])return o[rateKey(date,id)];
+function songOf(date,id){
  var b=DAILY.filter(function(x){return x.date===date;})[0];if(!b)return null;
- var s=b.songs.filter(function(x){return x.id===id;})[0];
+ return b.songs.filter(function(x){return x.id===id;})[0]||null;
+}
+function getRate(date,id){
+ var o=loadRates(),v=o[rateKey(date,id)];
+ if(v){return v.rating==null?null:v;}
+ var s=songOf(date,id);
  if(s&&s.rating!=null)return {rating:s.rating,at:"",title:s.title,artist:s.artist,_fromData:1};
  return null;}
+function mkRec(date,id,n,ts){
+ var s=songOf(date,id)||{};
+ return {rating:n,ts:ts,at:new Date(ts).toISOString(),title:s.title||"",artist:s.artist||"",spotify:s.spotify||"",cover:s.cover||"",album:s.album||"",year:s.year||"",intro:s.intro||""};
+}
 function setRate(date,id,n){
- var o=loadRates();var k=rateKey(date,id);
- if(n==null){delete o[k];}else{o[k]={rating:n,at:new Date().toISOString(),title:"",artist:""};}
- // fill title/artist
- var b=DAILY.filter(function(x){return x.date===date;})[0];
- if(b){var s=b.songs.filter(function(x){return x.id===id;})[0];if(s&&o[k]){o[k].title=s.title;o[k].artist=s.artist;o[k].spotify=s.spotify||"";o[k].cover=s.cover||"";o[k].album=s.album||"";o[k].year=s.year||"";o[k].intro=s.intro||"";}}
- saveRates(o);rebuildRatedFromDaily();refreshSyncBar();
+ var o=loadRates(),k=rateKey(date,id),prev=o[k];
+ var ts=Math.max(Date.now(),prev&&prev.ts?prev.ts+1:0);
+ o[k]=mkRec(date,id,n==null?null:n,ts);
+ saveRates(o);
+ var q=loadQ();q[k]=1;saveQ(q);
+ rebuildRatedFromDaily();
+ flushQ();
+}
+/* ----- 同步状态点 ----- */
+var syncState="idle",flushing=false,flushTimer=null,lastSyncAt=0;
+function renderDot(){
+ var el=document.getElementById("syncdot");if(!el)return;
+ var n=Object.keys(loadQ()).length,txt,cls;
+ if(n>0&&syncState==="offline"){txt="离线，稍后重试 ("+n+")";cls="off";}
+ else if(n>0){txt="同步中…";cls="wait";}
+ else if(syncState==="offline"){txt="未连上服务器";cls="off";}
+ else {txt="已同步";cls="ok";}
+ el.className="syncdot "+cls+(el.getAttribute("data-show")==="1"?" show":"");
+ el.querySelector(".t").textContent=txt;
+}
+function showDot(on){var el=document.getElementById("syncdot");if(!el)return;el.setAttribute("data-show",on?"1":"0");el.classList.toggle("show",!!on);}
+function scheduleFlush(ms){clearTimeout(flushTimer);flushTimer=setTimeout(flushQ,ms||15000);}
+function flushQ(){
+ if(flushing)return;
+ var q=loadQ(),keys=Object.keys(q);
+ if(!keys.length){renderDot();return;}
+ flushing=true;renderDot();
+ var o=loadRates(),i=0,failed=false;
+ (function next(){
+  if(i>=keys.length){flushing=false;if(failed){syncState="offline";scheduleFlush(15000);}else{syncState="idle";lastSyncAt=Date.now();}renderDot();return;}
+  var k=keys[i++],v=o[k];
+  if(!v){var q2=loadQ();delete q2[k];saveQ(q2);return next();}
+  var sent=v.ts,body=JSON.stringify({key:k,date:k.slice(0,10),title:v.title||"",artist:v.artist||"",rating:v.rating==null?null:v.rating,ts:sent});
+  fetch(SYNC_URL+"/rate",{method:"POST",headers:{"Content-Type":"application/json"},body:body,keepalive:body.length<60000}).then(function(r){
+   if(r.ok||(r.status>=400&&r.status<500&&r.status!==429&&r.status!==408)){var q3=loadQ(),cur=loadRates()[k];if(!cur||cur.ts===sent)delete q3[k];saveQ(q3);}
+   else failed=true;
+   next();
+  }).catch(function(){failed=true;next();});
+ })();
+}
+/* ----- 拉取：以服务端为准，本地未同步的保留并重发 ----- */
+function pullRatings(){
+ var ctl=typeof AbortController!=="undefined"?new AbortController():null,tm=setTimeout(function(){if(ctl)ctl.abort();},12000);
+ return fetch(SYNC_URL+"/ratings",{cache:"no-store",signal:ctl?ctl.signal:undefined}).then(function(r){if(!r.ok)throw new Error("http "+r.status);return r.json();}).then(function(d){
+  clearTimeout(tm);
+  var srv=(d&&d.ratings)||{},o=loadRates(),q=loadQ(),changed=0;
+  Object.keys(srv).forEach(function(k){
+   var sr=srv[k];if(!sr||typeof sr.ts!=="number")return;
+   if(q[k])return; // 本地待发送，保留并重发
+   var l=o[k];
+   if(l&&l.ts>sr.ts){if(l.rating!==sr.rating){q[k]=1;return;}l.ts=sr.ts;return;} // 本地更新（未发出）→ 补发；评分相同则直接对齐时间戳
+   if(!l||l.ts!==sr.ts||l.rating!==sr.rating){
+    var id=k.slice(11);
+    var rec=mkRec(k.slice(0,10),id,sr.rating==null?null:sr.rating,sr.ts);
+    if(!rec.title)rec.title=sr.title||"";if(!rec.artist)rec.artist=sr.artist||"";
+    o[k]=rec;changed++;
+   }
+  });
+  Object.keys(o).forEach(function(k){ // 本地有、服务端没有 → 迁移上传
+   if(!srv[k]&&!q[k]&&o[k]&&o[k].title){if(!o[k].ts)o[k].ts=Date.now();q[k]=1;}
+  });
+  saveRates(o);saveQ(q);
+  syncState="idle";
+  if(changed){rebuildRatedFromDaily();rerenderCurrent();}
+  flushQ();renderDot();
+ }).catch(function(){clearTimeout(tm);syncState="offline";renderDot();scheduleFlush(20000);});
+}
+function rerenderCurrent(){
+ var y=window.scrollY;curKey=null;route();window.scrollTo(0,y);
+ if(svOpen){var sg=SONGS[svKey];if(sg&&sg.kind==="d")SVB.innerHTML=songDaily(sg);}
+}
+/* ----- 备用：手动导出（短包 / 分享 / GitHub 预填 Issue） ----- */
+function allLocalRated(){
+ var o=loadRates(),out=[];
+ DAILY.forEach(function(b){b.songs.forEach(function(s,i){var v=o[rateKey(b.date,s.id)];if(v&&v.rating!=null)out.push({date:b.date,i:i+1,title:s.title,rating:v.rating});});});
+ return out;
 }
 function shortPack(scopeDate){
- var lines=["HB"];
- function addDay(b){
-  var parts=[];
-  b.songs.forEach(function(s,i){
-   var o=loadRates()[rateKey(b.date,s.id)];
-   if(!o)return;
-   parts.push((i+1)+":"+o.rating);
-  });
-  if(parts.length)lines.push(b.date.slice(5).replace("-","")+":"+parts.join(","));
- }
- if(scopeDate){var b=findBatch(scopeDate);if(b)addDay(b);} else DAILY.forEach(addDay);
- return lines.join("|");
+ var days={},order=[];
+ allLocalRated().forEach(function(x){if(scopeDate&&x.date!==scopeDate)return;if(!days[x.date]){days[x.date]=[];order.push(x.date);}days[x.date].push(x.i+":"+x.rating);});
+ return ["HB"].concat(order.map(function(d){return d.slice(5).replace("-","")+":"+days[d].join(",");})).join("|");
 }
 function readablePack(scopeDate){
- var lines=["HB-RATE"];
- function addDay(b){
-  var any=false,block=["#"+b.date];
-  b.songs.forEach(function(s){
-   var o=loadRates()[rateKey(b.date,s.id)];if(!o)return;any=true;
-   block.push(s.title+"="+o.rating);
-  });
-  if(any)lines=lines.concat(block);
- }
- if(scopeDate){var b=findBatch(scopeDate);if(b)addDay(b);} else DAILY.forEach(addDay);
+ var lines=["HB-RATE"],last="";
+ allLocalRated().forEach(function(x){if(scopeDate&&x.date!==scopeDate)return;if(x.date!==last){lines.push("#"+x.date);last=x.date;}lines.push(x.title+"="+x.rating);});
  lines.push("#1收藏2还不错3没感觉");
  return lines.join("\n");
 }
-function markSynced(){
- try{localStorage.setItem("harmonia_daily_synced_v1",JSON.stringify(loadRates()));}catch(e){}
- refreshSyncBar();
-}
-function pendingVsSynced(){
- var cur=loadRates(),syn={};
- try{syn=JSON.parse(localStorage.getItem("harmonia_daily_synced_v1")||"{}")||{};}catch(e){}
- var n=0;
- Object.keys(cur).forEach(function(k){if(JSON.stringify(cur[k])!==JSON.stringify(syn[k]))n++;});
- Object.keys(syn).forEach(function(k){if(!cur[k])n++;});
- return n;
-}
 function copyText(txt,msg){
- function ok(){toast(msg||"已复制");markSynced();}
- if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(txt).then(ok).catch(function(){fb();});
- else fb();
+ function ok(){toast(msg||"已复制");}
  function fb(){var ta=document.createElement("textarea");ta.value=txt;document.body.appendChild(ta);ta.select();try{document.execCommand("copy");ok();}catch(e){toast("复制失败，请长按手动选");}document.body.removeChild(ta);}
+ if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(txt).then(ok).catch(fb);else fb();
 }
-function shareOrCopy(scopeDate){
- var short=shortPack(scopeDate), full=readablePack(scopeDate);
- var txt=short+(full.length?("\n"+full):"");
- if(navigator.share){
-  navigator.share({title:"Harmonia 评分",text:txt}).then(function(){toast("已打开分享，发给 Harmonia 即可");markSynced();}).catch(function(){copyText(txt,"已复制短评分包，粘贴给 Harmonia");});
- } else copyText(txt,"已复制短评分包，粘贴给 Harmonia");
+function packText(){return shortPack(null)+"\n"+readablePack(null);}
+function shareOrCopy(){
+ var txt=packText();
+ if(navigator.share){navigator.share({title:"Harmonia 评分",text:txt}).catch(function(){copyText(txt,"已复制评分包");});}
+ else copyText(txt,"已复制评分包");
 }
-function openGitHubIssue(scopeDate){
- var short=shortPack(scopeDate), full=readablePack(scopeDate);
- if(!short||short==="HB"){toast("还没有可提交的评分");return;}
- var title="HB "+(scopeDate||"all")+" "+new Date().toISOString().slice(0,16).replace("T"," ");
- var body=short+"\n\n"+full+"\n\n<!-- from harmonia music box -->";
- var url=GH_INBOX+"?title="+encodeURIComponent(title)+"&body="+encodeURIComponent(body);
- window.open(url,"_blank","noopener");
- toast("已打开 GitHub：点绿色 Create 即可写入收件箱");
+function openGitHubIssue(){
+ var short=shortPack(null);
+ if(short==="HB"){toast("还没有可提交的评分");return;}
+ var title="HB all "+new Date().toISOString().slice(0,16).replace("T"," ");
+ var body=short+"\n\n"+readablePack(null)+"\n\n<!-- from harmonia music box -->";
+ window.open(GH_INBOX+"?title="+encodeURIComponent(title)+"&body="+encodeURIComponent(body),"_blank","noopener");
 }
-function syncBarHtml(scopeDate){
- var n=pendingVsSynced();
- if(!n)return '<div class="syncbar" id="syncbar" data-scope="'+(scopeDate||'')+'"></div>';
- return '<div class="syncbar on" id="syncbar" data-scope="'+(scopeDate||'')+'"><div class="sx"><b>有 '+n+' 条未同步评分</b><br>网页不能安全带密钥写仓库。推荐：提交到 GitHub（预填 Issue→收件箱文件），或复制短包到私聊。</div><div class="sbtns">'
-  +'<button type="button" class="sbtn" id="syncGh" data-stop>提交到 GitHub</button>'
-  +'<button type="button" class="sbtn ghost" id="syncShare" data-stop>系统分享</button>'
-  +'<button type="button" class="sbtn ghost" id="syncCopy" data-stop>复制短包</button>'
-  +'<button type="button" class="sbtn ghost" id="syncDone" data-stop>我已提交</button></div></div>';
+function backupHtml(){
+ return '<details class="bk" data-stop><summary>备用 · 手动导出评分</summary><div class="bkb">'
+  +'<div class="meta" style="margin:0 0 8px">评分已自动同步，通常用不上。网络不通时可手动发给 Harmonia。</div>'
+  +'<div class="rowbtns"><button type="button" class="sbtn2" id="bkCopy">复制短包</button><button type="button" class="sbtn2" id="bkShare">系统分享</button><button type="button" class="sbtn2" id="bkGh">GitHub 预填 Issue</button><button type="button" class="sbtn2" id="bkSync">立即重试同步</button></div></div></details>';
 }
-function bindSyncBar(scopeDate){
- var gh=document.getElementById("syncGh"),sh=document.getElementById("syncShare"),cp=document.getElementById("syncCopy"),dn=document.getElementById("syncDone");
- if(gh)gh.onclick=function(e){e.stopPropagation();openGitHubIssue(scopeDate||null);};
- if(sh)sh.onclick=function(e){e.stopPropagation();shareOrCopy(scopeDate||null);};
- if(cp)cp.onclick=function(e){e.stopPropagation();copyText(shortPack(scopeDate||null)+"\n"+readablePack(scopeDate||null),"已复制短评分包");};
- if(dn)dn.onclick=function(e){e.stopPropagation();markSynced();toast("已标记为已同步");};
-}
-function refreshSyncBar(){
- var el=document.getElementById("syncbar");if(!el)return;
- var scope=el.getAttribute("data-scope")||"";
- var tmp=document.createElement("div");tmp.innerHTML=syncBarHtml(scope||null);
- var neu=tmp.firstChild;el.replaceWith(neu);bindSyncBar(scope||null);
+function bindBackup(){
+ var c=document.getElementById("bkCopy"),s=document.getElementById("bkShare"),g=document.getElementById("bkGh"),r=document.getElementById("bkSync");
+ if(c)c.onclick=function(e){e.stopPropagation();copyText(packText(),"已复制评分包");};
+ if(s)s.onclick=function(e){e.stopPropagation();shareOrCopy();};
+ if(g)g.onclick=function(e){e.stopPropagation();openGitHubIssue();};
+ if(r)r.onclick=function(e){e.stopPropagation();toast("正在同步…");pullRatings();};
 }
 var RL3={1:"收藏",2:"还不错",3:"没感觉"};
 function rebuildRatedFromDaily(){
- var base=RATED_ALL.filter(function(r){return r.rating===1;}).slice();
- var o=loadRates(),seen={};
+ var o=loadRates(),ov={},seen={};
+ Object.keys(o).forEach(function(k){var v=o[k];if(!v||!v.title)return;var kk=((v.artist||"")+"|"+(v.title||"")).toLowerCase();if(!ov[kk]||ov[kk].ts<=v.ts)ov[kk]={rating:v.rating,ts:v.ts||0,v:v};});
+ var base=RATED_ALL.filter(function(r){
+  if(r.rating!==1)return false;
+  var x=ov[(r.artist+"|"+r.title).toLowerCase()];
+  return !(x&&x.rating!==1); // 本地/服务端改出 1（含取消）→ 从歌手页移除
+ });
  base.forEach(function(r){seen[(r.artist+"|"+r.title).toLowerCase()]=1;});
- Object.keys(o).forEach(function(k){
-  var v=o[k];if(!v||v.rating!==1)return;
-  var key=((v.artist||"")+"|"+(v.title||"")).toLowerCase();
-  if(seen[key])return;seen[key]=1;
-  base.push({artist:v.artist,title:v.title,album:v.album||"",year:v.year||"",rating:1,rated_date:(v.at||"").slice(0,10),rating_note:"来自每日推荐（本地评分，待同步）",intro:v.intro||"",intro_date:"",intro_found:!!v.intro,spotify:v.spotify||"",netease:"",netease_note:"",note:"每日推荐本地收藏",cover:v.cover||"",live:[],_local:1});
+ Object.keys(ov).forEach(function(kk){
+  var x=ov[kk],v=x.v;if(x.rating!==1||seen[kk])return;seen[kk]=1;
+  base.push({artist:v.artist,title:v.title,album:v.album||"",year:v.year||"",rating:1,rated_date:(v.at||"").slice(0,10),rating_note:"来自每日推荐",intro:v.intro||"",intro_date:"",intro_found:!!v.intro,spotify:v.spotify||"",netease:"",netease_note:"",note:"每日推荐收藏",cover:v.cover||"",live:[],_local:1});
  });
  RATED=base;
  ARTISTS=buildArtists();
@@ -451,41 +511,39 @@ function todayBatch(){return DAILY[0]||null;}
 function findBatch(date){return DAILY.filter(function(b){return b.date===date;})[0]||null;}
 function dayCard(b){
  var rated=b.songs.filter(function(s){return getRate(b.date,s.id);}).length;
- var prev="";b.songs.slice(0,4).forEach(function(s){prev+='<div class="cover">'+cover(s)+'</div>';});
+ var prev="";b.songs.slice(0,5).forEach(function(s){prev+='<div class="cover">'+cover(s)+'</div>';});
  return '<div class="dday" data-day="'+esc(b.date)+'"><div class="body"><div class="name">'+esc(b.title||b.date)+'</div>'
   +'<div class="meta">'+b.songs.length+' 首 · 已评 '+rated+(b.note?' · '+esc(b.note):'')+'</div>'
   +'<div class="preview">'+prev+'</div></div></div>';
 }
 function dailyHome(){
  setTab("daily");document.title="每日推荐 · Harmonia 的八音盒";
- var h='<h1>每日推荐</h1>';
+ var h=eyebrow("每天 5 首 · 点分自动同步")+'<h1>每日推荐</h1>';
  if(!DAILY.length){app.innerHTML=h+'<div class="empty">还没有每日推荐批次</div>';return;}
- h+=syncBarHtml(null);
- h+='<div class="meta" style="margin:0 0 12px">按天浏览，点进去打分；改分后用上方同步条发给 Harmonia。</div><div class="grid">';
+ h+='<div class="lead">共 '+DAILY.length+' 天 · 点进某一天打分，评分会自动同步给 Harmonia</div><div class="grid">';
  DAILY.forEach(function(b){h+=dayCard(b);});
- app.innerHTML=h+'</div>';
- bindSyncBar(null);
+ app.innerHTML=h+'</div>'+backupHtml();
+ bindBackup();
 }
 function dailyDay(date){
  var b=findBatch(date);
  if(!b){nav("#/daily");return;}
  setTab("daily");document.title=(b.title||b.date)+" · Harmonia 的八音盒";
- var h=syncBarHtml(date);
- h+='<div class="phead" style="margin-bottom:8px"><div><h1 style="margin:0 0 6px">'+esc(b.title||b.date)+'</h1>'
+ var h='<div class="phead" style="margin-bottom:8px"><div>'+eyebrow("每日推荐 · "+b.date)+'<h1 style="margin:0 0 6px">'+esc(b.title||b.date)+'</h1>'
   +'<div class="meta">'+b.songs.length+' 首'+(b.note?' · '+esc(b.note):'')+'</div></div></div>';
+ h+='<div class="list">';
  b.songs.forEach(function(s,i){h+=dailyCard(b,s,i);});
- app.innerHTML=h;
- bindSyncBar(date);
+ app.innerHTML=h+'</div>';
 }
 function dailyCard(b,s,i){
  var r=getRate(b.date,s.id);
  var pill=r?'<span class="pill-rated p'+r.rating+'">'+RL3[r.rating]+'</span>':'';
  return '<div class="dcard" data-daily="'+esc(b.date)+'" data-sid="'+esc(s.id)+'">'
-  +'<div class="dtop" data-open-song><div class="cover">'+cover(s)+'</div><div class="dmeta info"><div class="t">'+esc(s.title)+pill+'</div>'
-  +'<div class="a">'+esc(s.artist)+'</div><div class="al">'+esc(s.album||"")+(s.year?' · '+esc(s.year):'')+(s.kind?' · <span class="badge k1">'+esc(s.kind)+'</span>':'')+'</div></div></div>'
+  +'<div class="dtop" data-open-song><div class="idx">'+(i+1)+'</div><div class="cover">'+cover(s)+'</div><div class="dmeta info"><div class="t">'+esc(s.title)+pill+'</div>'
+  +'<div class="a">'+esc(s.artist)+'</div><div class="al">'+esc(s.album||"")+(s.year?' · '+esc(s.year):'')+(s.kind?' · <span class="badge k1">'+esc(s.kind)+'</span>':'')+'</div>'+whyHtml(s.intro)+'</div></div>'
   +'<div class="acts" style="margin-top:10px;justify-content:flex-start" data-stop>'+btnSp(s)+btnNe(s)+(s.youtube?'<a class="btn b-yt" data-stop href="'+esc(s.youtube)+'" target="_blank" rel="noopener noreferrer">YouTube</a>':'')+'</div>'
   +rateBar(b.date,s.id,r&&r.rating)
-  +'<div class="dintro" data-stop><details><summary>为什么推 · 耳朵放哪 · 歌词大意</summary><div class="txt">'+md(s.intro||"")+'</div></details></div>'
+  +'<div class="dintro" data-stop><details><summary>完整推荐 · 耳朵放哪 · 歌词大意</summary><div class="txt">'+md(s.intro||"")+'</div></details></div>'
   +'</div>';
 }
 function rateBar(date,id,cur){
@@ -498,7 +556,7 @@ function rateBar(date,id,cur){
 function songDaily(sg){
  var s=sg.s,b=sg.b;
  var r=getRate(b.date,s.id);
- var h='<div class="cover">'+cover(s)+'</div><h2>'+esc(s.title)+'</h2><div class="meta">'+esc(s.artist)+'</div><dl>'
+ var h='<div class="cover">'+cover(s)+'</div>'+eyebrow("每日推荐 · "+(b.title||b.date))+'<h2>'+esc(s.title)+'</h2><div class="meta">'+esc(s.artist)+'</div><dl>'
   +'<dt>专辑</dt><dd>'+esc(s.album||"—")+'</dd><dt>年份</dt><dd>'+esc(s.year||"—")+'</dd>'
   +'<dt>批次</dt><dd>'+esc(b.title||b.date)+'</dd><dt>类型</dt><dd>'+esc(s.kind||"—")+'</dd></dl>';
  h+=rateBar(b.date,s.id,r&&r.rating);
@@ -507,11 +565,11 @@ function songDaily(sg){
  h+='<div class="links">'+btnSp(s)+btnNe(s)+(s.youtube?'<a class="btn b-yt" href="'+esc(s.youtube)+'" target="_blank" rel="noopener noreferrer">YouTube</a>':'')+'</div>';
  return h;
 }
-function setTab(t){document.getElementById("tab-pl").classList.toggle("on",t==="pl");document.getElementById("tab-daily").classList.toggle("on",t==="daily");document.getElementById("tab-ar").classList.toggle("on",t==="ar");}
+function setTab(t){showDot(t==="daily");document.getElementById("tab-pl").classList.toggle("on",t==="pl");document.getElementById("tab-daily").classList.toggle("on",t==="daily");document.getElementById("tab-ar").classList.toggle("on",t==="ar");}
 function home(){
  setTab("pl");document.title="Harmonia 的八音盒";
  var n=LIB.reduce(function(a,p){return a+p.songs.length;},0);
- var h='<h1>我的歌单</h1><div class="grid">';
+ var h=eyebrow("我的收藏 · 歌单")+'<h1>我的歌单</h1><div class="lead">'+LIB.length+' 个歌单 · '+n+' 首歌</div><div class="grid">';
  LIB.forEach(function(p){
   h+='<div class="pl" data-pl="'+esc(p.id)+'">'+plCover(p)+'<div class="body"><div class="name">'+esc(p.name)+'</div>'
    +'<div class="meta">'+p.songs.length+' 首 · '+esc(p.source&&p.source.name||"")+'</div><div class="meta">收录于 '+esc(p.added)+'</div>'
@@ -525,7 +583,7 @@ function playlist(id){
  if(!p)return;
  setTab("pl");document.title=p.name+" · Harmonia 的八音盒";
  var src=p.source||{};
- var h='<div class="phead">'+plCover(p)+'<div><h1>'+esc(p.name)+'</h1>'
+ var h='<div class="phead">'+plCover(p)+'<div>'+eyebrow("歌单")+'<h1>'+esc(p.name)+'</h1>'
   +'<div class="meta">来源：'+(src.url?'<a href="'+esc(src.url)+'" target="_blank" rel="noopener noreferrer">'+esc(src.name)+'</a>':esc(src.name))+'</div>'
   +'<div class="meta">收录日期：'+esc(p.added)+' · '+p.songs.length+' 首</div><div class="desc">'+esc(p.description)+'</div></div></div><div class="list">';
  p.songs.forEach(function(s,i){h+=rowHtml(p,s,i,false);});
@@ -533,7 +591,7 @@ function playlist(id){
 }
 function artistsHome(){
  setTab("ar");document.title="按歌手 · Harmonia 的八音盒";
- var h='<h1>按歌手</h1><div class="meta" style="margin:-8px 0 14px">只收录你打过 1 分（帮我收藏）的歌：共 '+RATED.length+' 首，'+ARTISTS.length+' 位歌手。</div><div class="agrid">';
+ var h=eyebrow("只收「收藏」· 帮我记住")+'<h1>按歌手</h1><div class="lead">共 '+RATED.length+' 首 · '+ARTISTS.length+' 位歌手</div><div class="agrid">';
  ARTISTS.forEach(function(a){h+=artistCard(a);});
  app.innerHTML=h+'</div>';
 }
@@ -541,7 +599,7 @@ function artistPage(name){
  var a=ARTISTS.filter(function(x){return x.name===name;})[0];
  if(!a)return;
  setTab("ar");document.title=a.name+" · Harmonia 的八音盒";
- var h='<div class="phead"><div class="cover artist-av">'+cover(a.avatar)+'</div><div><h1>'+esc(a.name)+'</h1>'
+ var h='<div class="phead"><div class="cover artist-av">'+cover(a.avatar)+'</div><div>'+eyebrow("歌手")+'<h1>'+esc(a.name)+'</h1>'
   +'<div class="meta">'+a.idx.length+' 首 · 帮我收藏'+(a.spotify_artist_url?' · <a href="'+esc(a.spotify_artist_url)+'" target="_blank" rel="noopener noreferrer">Spotify 艺人页</a>':'')+(a.artist_image?'':' · 暂无艺人头像，暂用歌曲封面')+'</div></div></div>'
   +'<div class="list" id="alist"></div>';
  app.innerHTML=h;
@@ -556,7 +614,7 @@ function search(t){
  if(rs)h+='<div class="sec-h">帮我收藏（按歌手）</div><div class="list">'+rs+'</div>';
  var ps="";LIB.forEach(function(p){p.songs.forEach(function(s,i){if((s.title+" "+s.artist).toLowerCase().indexOf(k)>=0){ps+=rowHtml(p,s,i,true);c++;}});});
  if(ps)h+='<div class="sec-h">歌单里的歌</div><div class="list">'+ps+'</div>';
- app.innerHTML=c?'<h1>搜索结果</h1>'+h:'<div class="empty">没有找到与「'+esc(t)+'」相关的歌曲或歌手</div>';
+ app.innerHTML=c?eyebrow("搜索")+'<h1>搜索结果</h1><div class="lead">共 '+c+' 条</div>'+h:'<div class="empty">没有找到与「'+esc(t)+'」相关的歌曲或歌手</div>';
 }
 /* ---------- songs index + full-screen song view ---------- */
 var SONGS={};
@@ -567,7 +625,7 @@ var SV=document.getElementById("sv"),SVB=document.getElementById("svbody"),SVT=d
 var svOpen=false,svKey=null,animNext=false;
 function songP(sg){var p=sg.p,s=sg.s;
  var yt=ytTime(p,s);
- var h='<div class="cover">'+cover(s)+'</div><h2>'+esc(s.title)+'</h2><div class="meta">'+esc(s.artist)+'</div><dl>'
+ var h='<div class="cover">'+cover(s)+'</div>'+eyebrow("歌单 · "+p.name)+'<h2>'+esc(s.title)+'</h2><div class="meta">'+esc(s.artist)+'</div><dl>'
   +'<dt>专辑</dt><dd>'+esc(s.album||"—")+'</dd><dt>年份</dt><dd>'+esc(s.year||"—")+'</dd>'
   +'<dt>歌单</dt><dd>'+esc(p.name)+'</dd>'+(yt?'<dt>时间点</dt><dd><a href="'+esc(yt)+'" target="_blank" rel="noopener noreferrer">视频 '+fmt(s.time_sec)+'</a></dd>':'')+'</dl>';
  if(s.note)h+='<div class="note"><b>备注</b>　'+esc(s.note)+'</div>';
@@ -577,7 +635,7 @@ function songP(sg){var p=sg.p,s=sg.s;
  return h;
 }
 function songR(sg){var r=sg.r;
- var h='<div class="cover">'+cover(r)+'</div><h2>'+esc(r.title)+'</h2><div class="meta">'+esc(r.artist)+'</div><dl>'
+ var h='<div class="cover">'+cover(r)+'</div>'+eyebrow("我的收藏 · "+r.artist)+'<h2>'+esc(r.title)+'</h2><div class="meta">'+esc(r.artist)+'</div><dl>'
   +'<dt>专辑</dt><dd>'+esc(r.album||"—")+'</dd><dt>年份</dt><dd>'+esc(r.year||"—")+'</dd>'
   +'<dt>评分</dt><dd><span class="rt rt'+r.rating+'">'+RL[r.rating]+'</span></dd>'
   +'<dt>评分日期</dt><dd>'+(r.rated_date?esc(r.rated_date):"未能查到")+'</dd></dl>';
@@ -741,6 +799,10 @@ try{history.scrollRestoration="manual";}catch(e){}
  history.pushState({n:anc.length},"",cur);
 })();
 route();
+window.addEventListener("online",function(){syncState="idle";pullRatings();});
+document.addEventListener("visibilitychange",function(){if(!document.hidden&&Date.now()-lastSyncAt>60000)pullRatings();});
+document.getElementById("syncdot").onclick=function(e){e.stopPropagation();toast("正在同步…");pullRatings();};
+renderDot();pullRatings();
 })();
 </script>
 </body>
