@@ -300,6 +300,7 @@ function ratedRow(r,idx,showArtist){
 
 /* ---------- daily ratings (localStorage) + sync pack ---------- */
 var LS_KEY="harmonia_daily_ratings_v1";
+var GH_INBOX="https://github.com/SolaninSan128/harmonia-ratings-inbox/issues/new";
 function loadRates(){try{return JSON.parse(localStorage.getItem(LS_KEY)||"{}")||{};}catch(e){return {};}}
 function saveRates(o){try{localStorage.setItem(LS_KEY,JSON.stringify(o));}catch(e){}}
 function rateKey(date,id){return date+"|"+id;}
@@ -369,17 +370,30 @@ function shareOrCopy(scopeDate){
   navigator.share({title:"Harmonia 评分",text:txt}).then(function(){toast("已打开分享，发给 Harmonia 即可");markSynced();}).catch(function(){copyText(txt,"已复制短评分包，粘贴给 Harmonia");});
  } else copyText(txt,"已复制短评分包，粘贴给 Harmonia");
 }
+function openGitHubIssue(scopeDate){
+ var short=shortPack(scopeDate), full=readablePack(scopeDate);
+ if(!short||short==="HB"){toast("还没有可提交的评分");return;}
+ var title="HB "+(scopeDate||"all")+" "+new Date().toISOString().slice(0,16).replace("T"," ");
+ var body=short+"\n\n"+full+"\n\n<!-- from harmonia music box -->";
+ var url=GH_INBOX+"?title="+encodeURIComponent(title)+"&body="+encodeURIComponent(body);
+ window.open(url,"_blank","noopener");
+ toast("已打开 GitHub：点绿色 Create 即可写入收件箱");
+}
 function syncBarHtml(scopeDate){
  var n=pendingVsSynced();
  if(!n)return '<div class="syncbar" id="syncbar" data-scope="'+(scopeDate||'')+'"></div>';
- return '<div class="syncbar on" id="syncbar" data-scope="'+(scopeDate||'')+'"><div class="sx"><b>有 '+n+' 条未同步评分</b><br>静态网页没法自己写进对话；点同步/复制，把短包发给我。</div><div class="sbtns">'
-  +'<button type="button" class="sbtn" id="syncShare" data-stop>一键同步</button>'
-  +'<button type="button" class="sbtn ghost" id="syncCopy" data-stop>复制短包</button></div></div>';
+ return '<div class="syncbar on" id="syncbar" data-scope="'+(scopeDate||'')+'"><div class="sx"><b>有 '+n+' 条未同步评分</b><br>网页不能安全带密钥写仓库。推荐：提交到 GitHub（预填 Issue→收件箱文件），或复制短包到私聊。</div><div class="sbtns">'
+  +'<button type="button" class="sbtn" id="syncGh" data-stop>提交到 GitHub</button>'
+  +'<button type="button" class="sbtn ghost" id="syncShare" data-stop>系统分享</button>'
+  +'<button type="button" class="sbtn ghost" id="syncCopy" data-stop>复制短包</button>'
+  +'<button type="button" class="sbtn ghost" id="syncDone" data-stop>我已提交</button></div></div>';
 }
 function bindSyncBar(scopeDate){
- var sh=document.getElementById("syncShare"),cp=document.getElementById("syncCopy");
+ var gh=document.getElementById("syncGh"),sh=document.getElementById("syncShare"),cp=document.getElementById("syncCopy"),dn=document.getElementById("syncDone");
+ if(gh)gh.onclick=function(e){e.stopPropagation();openGitHubIssue(scopeDate||null);};
  if(sh)sh.onclick=function(e){e.stopPropagation();shareOrCopy(scopeDate||null);};
  if(cp)cp.onclick=function(e){e.stopPropagation();copyText(shortPack(scopeDate||null)+"\n"+readablePack(scopeDate||null),"已复制短评分包");};
+ if(dn)dn.onclick=function(e){e.stopPropagation();markSynced();toast("已标记为已同步");};
 }
 function refreshSyncBar(){
  var el=document.getElementById("syncbar");if(!el)return;
