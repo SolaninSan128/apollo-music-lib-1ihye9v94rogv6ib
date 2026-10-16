@@ -135,29 +135,42 @@ footer{max-width:980px;margin:10px auto 30px;padding:0 16px;color:var(--sub);fon
 html.mobile .nehint{display:none}
 
 .tab-daily.on{background:#7c5cff;color:#fff;border-color:#7c5cff}
-.dcard{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px;margin:0 0 14px;box-shadow:var(--shadow);cursor:pointer}
-.dcard:hover{border-color:#7c5cff55}
-.dcard .dtop{display:flex;gap:12px;align-items:flex-start}
-.dcard .cover{width:72px;height:72px;flex:none;border-radius:10px}
-.dcard .dmeta .t{font-size:16px}
+.dday{background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;cursor:pointer;box-shadow:var(--shadow);transition:transform .15s;margin:0 0 12px}
+.dday:hover{transform:translateY(-2px)}
+.dday .body{padding:12px 14px 14px}
+.dday .name{font-weight:650;font-size:16px;line-height:1.35;margin-bottom:4px}
+.dday .preview{display:flex;gap:6px;margin-top:10px}
+.dday .preview .cover{width:48px;height:48px;border-radius:8px;flex:none;overflow:hidden}
+.dday .preview .ph{font-size:16px}
+.dcard{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px;margin:0 0 12px;box-shadow:var(--shadow)}
+.dcard .dtop{display:flex;gap:12px;align-items:flex-start;cursor:pointer}
+.dcard .cover{width:64px;height:64px;flex:none;border-radius:10px}
+.dcard .dmeta .t{font-size:15px}
 .badge{display:inline-block;font-size:11px;font-weight:700;padding:2px 8px;border-radius:999px;margin-right:6px}
 .badge.k1{background:rgba(124,92,255,.15);color:#7c5cff}
-.rates{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
-.rate{flex:1;min-width:90px;border:2px solid var(--line);background:var(--card2);color:var(--text);border-radius:14px;padding:12px 8px;font:inherit;font-weight:700;font-size:14px;cursor:pointer;text-align:center;line-height:1.25}
-.rate small{display:block;font-weight:600;font-size:11px;opacity:.75;margin-top:2px}
-.rate.r1{border-color:#1db95444}.rate.r1.on,.rate.r1:active{background:#1db954;color:#06210f;border-color:#1db954}
-.rate.r2{border-color:#f0aa1444}.rate.r2.on,.rate.r2:active{background:#f0aa14;color:#3a2a00;border-color:#f0aa14}
-.rate.r3{border-color:#9aa1ab55}.rate.r3.on,.rate.r3:active{background:#6b7280;color:#fff;border-color:#6b7280}
-.syncbox{background:var(--card);border:1px dashed var(--line);border-radius:14px;padding:12px 14px;margin:0 0 16px}
-.syncbox .st{font-weight:700;margin:0 0 4px}
-.syncbox .sd{color:var(--sub);font-size:13px;margin:0 0 10px}
-.syncbox .rowbtns{display:flex;gap:8px;flex-wrap:wrap}
-.btn-copy{background:#7c5cff;color:#fff;border:0;border-radius:999px;padding:8px 14px;font:inherit;font-weight:700;cursor:pointer}
-.btn-copy:disabled{opacity:.45;cursor:default}
+.rates{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap}
+.rate{border:0;border-radius:999px;padding:6px 12px;font:inherit;font-weight:650;font-size:12.5px;cursor:pointer;line-height:1.2;opacity:.5;transition:opacity .15s,transform .1s,box-shadow .15s}
+.rate:active{transform:scale(.97)}
+.rate.r1{background:#1db954;color:#041a0c}
+.rate.r2{background:#d4a017;color:#1a1400}
+.rate.r3{background:#4b5563;color:#f8fafc}
+.rate.on{opacity:1;box-shadow:0 0 0 2px var(--bg),0 0 0 3.5px rgba(255,255,255,.35)}
+.rate.r1.on{box-shadow:0 0 0 2px var(--bg),0 0 0 3.5px #1db954}
+.rate.r2.on{box-shadow:0 0 0 2px var(--bg),0 0 0 3.5px #d4a017}
+.rate.r3.on{box-shadow:0 0 0 2px var(--bg),0 0 0 3.5px #4b5563}
+.syncbar{position:sticky;top:calc(env(safe-area-inset-top,0px) + 100px);z-index:15;display:none;align-items:center;gap:10px;flex-wrap:wrap;background:linear-gradient(135deg,#2f2163,#5b3cc4);color:#fff;border-radius:12px;padding:10px 12px;margin:0 0 14px;box-shadow:var(--shadow)}
+.syncbar.on{display:flex}
+.syncbar .sx{flex:1;min-width:140px;font-size:13px;line-height:1.35}
+.syncbar .sx b{font-weight:700}
+.syncbar .sbtns{display:flex;gap:6px;flex-wrap:wrap}
+.sbtn{border:0;border-radius:999px;padding:7px 12px;font:inherit;font-weight:700;font-size:12.5px;cursor:pointer;background:#fff;color:#3d2b7a}
+.sbtn.ghost{background:rgba(255,255,255,.18);color:#fff}
 .dintro{background:var(--card2);border-radius:12px;padding:10px 12px;margin-top:10px;font-size:13.5px;white-space:pre-wrap}
 .dintro details summary{cursor:pointer;color:var(--sub);font-weight:600}
-.pill-rated{font-size:12px;font-weight:700;margin-left:6px}
-.pill-rated.p1{color:#1db954}.pill-rated.p2{color:#d97706}.pill-rated.p3{color:#9aa1ab}
+.pill-rated{font-size:11px;font-weight:700;margin-left:6px;padding:1px 7px;border-radius:999px;vertical-align:middle}
+.pill-rated.p1{background:#1db954;color:#041a0c}
+.pill-rated.p2{background:#d4a017;color:#1a1400}
+.pill-rated.p3{background:#4b5563;color:#f8fafc}
 .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:rgba(20,20,20,.9);color:#fff;padding:8px 16px;border-radius:999px;font-size:13px;z-index:80;display:none}
 .intro-full{background:var(--card2);border-radius:10px;padding:9px 11px;font-size:13.5px;margin:8px 0}
 @media(max-width:620px){.row.col .acts{padding-left:0}.introbox{padding-left:0}.agrid{grid-template-columns:repeat(2,1fr);gap:10px}}
@@ -171,7 +184,7 @@ html.mobile .nehint{display:none}
  <label class="search"><span>🔍</span><input id="q" type="search" placeholder="搜索歌名、歌手" autocomplete="off"></label>
  <button class="icon-btn" id="theme" title="切换深色/浅色" aria-label="切换深色或浅色">◐</button>
 </div>
-<div class="tabs"><button class="tab on" id="tab-pl" data-tab="pl">歌单</button><button class="tab tab-daily" id="tab-daily" data-tab="daily">每日</button><button class="tab" id="tab-ar" data-tab="ar">歌手</button></div>
+<div class="tabs"><button class="tab on" id="tab-pl" data-tab="pl">歌单</button><button class="tab tab-daily" id="tab-daily" data-tab="daily">每日推荐</button><button class="tab" id="tab-ar" data-tab="ar">歌手</button></div>
 </header>
 <main id="app"></main>
 <footer id="foot"></footer>
@@ -181,7 +194,7 @@ html.mobile .nehint{display:none}
 /* ---- links.js: pure link logic (no DOM), unit-tested with node ---- */
 var LinkKit=(function(){
  function neId(u){var m=/[?&]id=(\d+)/.exec(u||"");return m?m[1]:"";}
- function spId(u){var m=/track\/([A-Za-z0-9]+)/.exec(u||"");return m?m[1]:"";}
+  function spId(u){var m=/track\/([A-Za-z0-9]+)/.exec(u||"");return m?m[1]:"";}
  /* app: phone/tablet scheme (autoplay); web: mobile fallback page; desk: desktop web player page (PC client has no reliable song scheme) */
  function neLinks(u){var id=neId(u);return id?{app:"orpheus://song/"+id+"/?autoplay=1",web:"https://music.163.com/song?id="+id,desk:"https://music.163.com/#/song?id="+id}:null;}
  function spLinks(u){var id=spId(u);return id?{app:"spotify:track:"+id,web:"https://open.spotify.com/track/"+id}:null;}
@@ -301,39 +314,80 @@ function setRate(date,id,n){
  // fill title/artist
  var b=DAILY.filter(function(x){return x.date===date;})[0];
  if(b){var s=b.songs.filter(function(x){return x.id===id;})[0];if(s&&o[k]){o[k].title=s.title;o[k].artist=s.artist;o[k].spotify=s.spotify||"";o[k].cover=s.cover||"";o[k].album=s.album||"";o[k].year=s.year||"";o[k].intro=s.intro||"";}}
- saveRates(o);rebuildRatedFromDaily();
+ saveRates(o);rebuildRatedFromDaily();refreshSyncBar();
 }
-function packLine(mode){
- mode=mode||"today";
- var lines=[];
- if(mode==="today"){
-  var today=(DAILY[0]&&DAILY[0].date)||"";
-  lines=["HB-RATE "+today];
-  (DAILY[0]&&DAILY[0].songs||[]).forEach(function(s,i){
-   var r=getRate(today,s.id);lines.push((i+1)+"."+s.title+" / "+s.artist+" = "+(r?String(r.rating):"_"));
+function shortPack(scopeDate){
+ var lines=["HB"];
+ function addDay(b){
+  var parts=[];
+  b.songs.forEach(function(s,i){
+   var o=loadRates()[rateKey(b.date,s.id)];
+   if(!o)return;
+   parts.push((i+1)+":"+o.rating);
   });
- } else {
-  lines=["HB-RATE-ALL"];
-  DAILY.forEach(function(b){
-   var any=false;var block=["# "+b.date];
-   b.songs.forEach(function(s){
-    var r=getRate(b.date,s.id);if(!r)return;any=true;
-    block.push(s.title+" / "+s.artist+" = "+r.rating);
-   });
-   if(any) lines=lines.concat(block);
-  });
+  if(parts.length)lines.push(b.date.slice(5).replace("-","")+":"+parts.join(","));
  }
- lines.push("# 1收藏 2还不错 3没感觉 _未评");
+ if(scopeDate){var b=findBatch(scopeDate);if(b)addDay(b);} else DAILY.forEach(addDay);
+ return lines.join("|");
+}
+function readablePack(scopeDate){
+ var lines=["HB-RATE"];
+ function addDay(b){
+  var any=false,block=["#"+b.date];
+  b.songs.forEach(function(s){
+   var o=loadRates()[rateKey(b.date,s.id)];if(!o)return;any=true;
+   block.push(s.title+"="+o.rating);
+  });
+  if(any)lines=lines.concat(block);
+ }
+ if(scopeDate){var b=findBatch(scopeDate);if(b)addDay(b);} else DAILY.forEach(addDay);
+ lines.push("#1收藏2还不错3没感觉");
  return lines.join("\n");
 }
-function copyPack(mode){
- var txt=packLine(mode);
- function ok(){toast(mode==="all"?"已复制全部已评，粘贴回 Harmonia":"已复制今日评分，粘贴回 Harmonia");}
- if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(txt).then(ok).catch(function(){fallback(txt);});}
- else fallback(txt);
- function fallback(t){var ta=document.createElement("textarea");ta.value=t;document.body.appendChild(ta);ta.select();try{document.execCommand("copy");ok();}catch(e){toast("复制失败，请长按手动复制");}document.body.removeChild(ta);}
+function markSynced(){
+ try{localStorage.setItem("harmonia_daily_synced_v1",JSON.stringify(loadRates()));}catch(e){}
+ refreshSyncBar();
 }
-var RL3={1:"1 收藏",2:"2 还不错",3:"3 没感觉"};
+function pendingVsSynced(){
+ var cur=loadRates(),syn={};
+ try{syn=JSON.parse(localStorage.getItem("harmonia_daily_synced_v1")||"{}")||{};}catch(e){}
+ var n=0;
+ Object.keys(cur).forEach(function(k){if(JSON.stringify(cur[k])!==JSON.stringify(syn[k]))n++;});
+ Object.keys(syn).forEach(function(k){if(!cur[k])n++;});
+ return n;
+}
+function copyText(txt,msg){
+ function ok(){toast(msg||"已复制");markSynced();}
+ if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(txt).then(ok).catch(function(){fb();});
+ else fb();
+ function fb(){var ta=document.createElement("textarea");ta.value=txt;document.body.appendChild(ta);ta.select();try{document.execCommand("copy");ok();}catch(e){toast("复制失败，请长按手动选");}document.body.removeChild(ta);}
+}
+function shareOrCopy(scopeDate){
+ var short=shortPack(scopeDate), full=readablePack(scopeDate);
+ var txt=short+(full.length?("\n"+full):"");
+ if(navigator.share){
+  navigator.share({title:"Harmonia 评分",text:txt}).then(function(){toast("已打开分享，发给 Harmonia 即可");markSynced();}).catch(function(){copyText(txt,"已复制短评分包，粘贴给 Harmonia");});
+ } else copyText(txt,"已复制短评分包，粘贴给 Harmonia");
+}
+function syncBarHtml(scopeDate){
+ var n=pendingVsSynced();
+ if(!n)return '<div class="syncbar" id="syncbar" data-scope="'+(scopeDate||'')+'"></div>';
+ return '<div class="syncbar on" id="syncbar" data-scope="'+(scopeDate||'')+'"><div class="sx"><b>有 '+n+' 条未同步评分</b><br>静态网页没法自己写进对话；点同步/复制，把短包发给我。</div><div class="sbtns">'
+  +'<button type="button" class="sbtn" id="syncShare" data-stop>一键同步</button>'
+  +'<button type="button" class="sbtn ghost" id="syncCopy" data-stop>复制短包</button></div></div>';
+}
+function bindSyncBar(scopeDate){
+ var sh=document.getElementById("syncShare"),cp=document.getElementById("syncCopy");
+ if(sh)sh.onclick=function(e){e.stopPropagation();shareOrCopy(scopeDate||null);};
+ if(cp)cp.onclick=function(e){e.stopPropagation();copyText(shortPack(scopeDate||null)+"\n"+readablePack(scopeDate||null),"已复制短评分包");};
+}
+function refreshSyncBar(){
+ var el=document.getElementById("syncbar");if(!el)return;
+ var scope=el.getAttribute("data-scope")||"";
+ var tmp=document.createElement("div");tmp.innerHTML=syncBarHtml(scope||null);
+ var neu=tmp.firstChild;el.replaceWith(neu);bindSyncBar(scope||null);
+}
+var RL3={1:"收藏",2:"还不错",3:"没感觉"};
 function rebuildRatedFromDaily(){
  var base=RATED_ALL.filter(function(r){return r.rating===1;}).slice();
  var o=loadRates(),seen={};
@@ -381,27 +435,40 @@ function artistCard(a){
 
 function todayBatch(){return DAILY[0]||null;}
 function findBatch(date){return DAILY.filter(function(b){return b.date===date;})[0]||null;}
+function dayCard(b){
+ var rated=b.songs.filter(function(s){return getRate(b.date,s.id);}).length;
+ var prev="";b.songs.slice(0,4).forEach(function(s){prev+='<div class="cover">'+cover(s)+'</div>';});
+ return '<div class="dday" data-day="'+esc(b.date)+'"><div class="body"><div class="name">'+esc(b.title||b.date)+'</div>'
+  +'<div class="meta">'+b.songs.length+' 首 · 已评 '+rated+(b.note?' · '+esc(b.note):'')+'</div>'
+  +'<div class="preview">'+prev+'</div></div></div>';
+}
 function dailyHome(){
  setTab("daily");document.title="每日推荐 · Harmonia 的八音盒";
  var h='<h1>每日推荐</h1>';
  if(!DAILY.length){app.innerHTML=h+'<div class="empty">还没有每日推荐批次</div>';return;}
- h+='<div class="syncbox"><div class="st">同步给 Harmonia</div><div class="sd">站点没法自己推分数。打分存在本机；改分后可复制评分包粘贴回私聊，我会写入口味档案（点 1 的进歌手收藏并发布）。「今日」= 最新一批；「全部已评」= 所有本机改过或有预填分的歌。</div><div class="rowbtns"><button type="button" class="btn-copy" id="copyRate">复制今日评分</button><button type="button" class="btn-copy" id="copyAll" style="background:var(--card2);color:var(--text);border:1px solid var(--line)">复制全部已评</button></div></div>';
- DAILY.forEach(function(b){
-  var rated=b.songs.filter(function(s){return getRate(b.date,s.id);}).length;
-  h+='<div class="sec-h" style="margin:18px 0 8px">'+esc(b.title||b.date)+'<span class="meta"> · '+b.songs.length+' 首 · 已评 '+rated+'</span></div>';
-  if(b.note)h+='<div class="meta" style="margin:-4px 0 10px">'+esc(b.note)+'</div>';
-  b.songs.forEach(function(s,i){h+=dailyCard(b,s,i);});
- });
+ h+=syncBarHtml(null);
+ h+='<div class="meta" style="margin:0 0 12px">按天浏览，点进去打分；改分后用上方同步条发给 Harmonia。</div><div class="grid">';
+ DAILY.forEach(function(b){h+=dayCard(b);});
+ app.innerHTML=h+'</div>';
+ bindSyncBar(null);
+}
+function dailyDay(date){
+ var b=findBatch(date);
+ if(!b){nav("#/daily");return;}
+ setTab("daily");document.title=(b.title||b.date)+" · Harmonia 的八音盒";
+ var h=syncBarHtml(date);
+ h+='<div class="phead" style="margin-bottom:8px"><div><h1 style="margin:0 0 6px">'+esc(b.title||b.date)+'</h1>'
+  +'<div class="meta">'+b.songs.length+' 首'+(b.note?' · '+esc(b.note):'')+'</div></div></div>';
+ b.songs.forEach(function(s,i){h+=dailyCard(b,s,i);});
  app.innerHTML=h;
- document.getElementById("copyRate").onclick=function(e){e.stopPropagation();copyPack("today");};
- document.getElementById("copyAll").onclick=function(e){e.stopPropagation();copyPack("all");};
+ bindSyncBar(date);
 }
 function dailyCard(b,s,i){
  var r=getRate(b.date,s.id);
  var pill=r?'<span class="pill-rated p'+r.rating+'">'+RL3[r.rating]+'</span>':'';
  return '<div class="dcard" data-daily="'+esc(b.date)+'" data-sid="'+esc(s.id)+'">'
-  +'<div class="dtop"><div class="cover">'+cover(s)+'</div><div class="dmeta info"><div class="t">'+esc(s.title)+pill+'</div>'
-  +'<div class="a">'+esc(s.artist)+'</div><div class="al">'+esc(s.album||"")+(s.year?' · '+esc(s.year):'')+' · <span class="badge k1">'+esc(s.kind||"推荐")+'</span></div></div></div>'
+  +'<div class="dtop" data-open-song><div class="cover">'+cover(s)+'</div><div class="dmeta info"><div class="t">'+esc(s.title)+pill+'</div>'
+  +'<div class="a">'+esc(s.artist)+'</div><div class="al">'+esc(s.album||"")+(s.year?' · '+esc(s.year):'')+(s.kind?' · <span class="badge k1">'+esc(s.kind)+'</span>':'')+'</div></div></div>'
   +'<div class="acts" style="margin-top:10px;justify-content:flex-start" data-stop>'+btnSp(s)+btnNe(s)+(s.youtube?'<a class="btn b-yt" data-stop href="'+esc(s.youtube)+'" target="_blank" rel="noopener noreferrer">YouTube</a>':'')+'</div>'
   +rateBar(b.date,s.id,r&&r.rating)
   +'<div class="dintro" data-stop><details><summary>为什么推 · 耳朵放哪 · 歌词大意</summary><div class="txt">'+md(s.intro||"")+'</div></details></div>'
@@ -409,9 +476,9 @@ function dailyCard(b,s,i){
 }
 function rateBar(date,id,cur){
  return '<div class="rates" data-stop data-date="'+esc(date)+'" data-sid="'+esc(id)+'">'
-  +'<button type="button" class="rate r1'+(cur===1?' on':'')+'" data-r="1">1 收藏<small>帮我记住</small></button>'
-  +'<button type="button" class="rate r2'+(cur===2?' on':'')+'" data-r="2">2 还不错<small>可以再遇见</small></button>'
-  +'<button type="button" class="rate r3'+(cur===3?' on':'')+'" data-r="3">3 没感觉<small>先记一笔</small></button>'
+  +'<button type="button" class="rate r1'+(cur===1?' on':'')+'" data-r="1">收藏</button>'
+  +'<button type="button" class="rate r2'+(cur===2?' on':'')+'" data-r="2">还不错</button>'
+  +'<button type="button" class="rate r3'+(cur===3?' on':'')+'" data-r="3">没感觉</button>'
   +'</div>';
 }
 function songDaily(sg){
@@ -554,7 +621,7 @@ function route(){
   if(!song){history.replaceState({n:depth()},"","#/");route();return;}
   p=parse(song.parent);
  }
- if((p.t==="pl"&&!LIB.some(function(x){return x.id===p.k;}))||(p.t==="ar"&&!ARTISTS.some(function(x){return x.name===p.k;}))){history.replaceState({n:depth()},"",p.t==="ar"?"#/artists":"#/");route();return;}
+ if((p.t==="pl"&&!LIB.some(function(x){return x.id===p.k;}))||(p.t==="ar"&&!ARTISTS.some(function(x){return x.name===p.k;}))||(p.t==="daily"&&!findBatch(p.k))){history.replaceState({n:depth()},"",p.t==="ar"?"#/artists":p.t==="daily"?"#/daily":"#/");route();return;}
  var key=p.t+":"+(p.k||"")+"|"+(isTop(p)?q.value.trim():"");
  if(song&&curKey!==null)key=curKey;
  if(key!==curKey){
@@ -564,7 +631,8 @@ function route(){
   else if(p.t==="pl")playlist(p.k);
   else if(p.t==="ar")artistPage(p.k);
   else if(p.t==="arhome")artistsHome();
-  else if(p.t==="daily"||p.t==="dailyhome")dailyHome();
+  else if(p.t==="daily")dailyDay(p.k);
+  else if(p.t==="dailyhome")dailyHome();
   else home();
   window.scrollTo(0,scrollMap[key]||0);
  }
@@ -615,7 +683,9 @@ app.addEventListener("click",function(e){
  if(e.target.closest("[data-stop]"))return;
  var r=e.target.closest(".row");
  if(r){nav("#/song/"+encodeURIComponent(r.getAttribute("data-sk")));return;}
- var dc=e.target.closest(".dcard");if(dc){nav("#/song/"+encodeURIComponent("d-"+dc.getAttribute("data-daily")+"-"+dc.getAttribute("data-sid")));return;}
+ var day=e.target.closest(".dday");if(day){nav("#/daily/"+encodeURIComponent(day.getAttribute("data-day")));return;}
+ var open=e.target.closest("[data-open-song]");
+ if(open){var dc=open.closest(".dcard");if(dc){nav("#/song/"+encodeURIComponent("d-"+dc.getAttribute("data-daily")+"-"+dc.getAttribute("data-sid")));return;}}
  var c=e.target.closest(".pl");if(c){nav("#/playlist/"+encodeURIComponent(c.getAttribute("data-pl")));return;}
  var ac=e.target.closest(".ac");if(ac){nav("#/artist/"+encodeURIComponent(ac.getAttribute("data-ar")));}
 });
