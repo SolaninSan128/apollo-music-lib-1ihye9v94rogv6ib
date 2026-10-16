@@ -55,6 +55,9 @@ h1{font-size:30px;line-height:1.15;font-weight:800;letter-spacing:-.01em;margin:
 .list{display:grid;grid-template-columns:repeat(auto-fill,minmax(360px,1fr));gap:12px}
 .row{position:relative;display:grid;grid-template-columns:76px minmax(0,1fr);gap:10px 12px;align-items:start;padding:12px;background:var(--card);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);cursor:pointer}
 .row .cover{width:76px;height:76px;border-radius:10px}
+.row[data-k=p]{grid-template-columns:92px minmax(0,1fr)}
+.row[data-k=p] .cover{width:92px;height:92px;border-radius:12px}
+.row[data-k=p] .ph{font-size:30px}
 .row .ph{font-size:24px}
 .row .idx{position:absolute;left:18px;top:18px;z-index:1;min-width:20px;height:20px;line-height:20px;padding:0 6px;border-radius:6px;background:rgba(15,10,5,.72);color:#f6ecd9;font-weight:800;font-size:11px;text-align:center}
 .info{min-width:0}
@@ -274,8 +277,7 @@ function rowHtml(p,s,i,showPl){
   +'<div class="cover">'+cover(s)+'</div>'
   +'<div class="info"><div class="t">'+esc(s.title)+'</div><div class="a">'+esc(s.artist)+'</div>'
   +'<div class="al">'+esc(s.album)+(s.year?' · '+esc(s.year):'')+(showPl?'<span class="tag">歌单：'+esc(p.name)+'</span>':'')+'</div></div>'
-  +'<div class="acts">'+(yt&&!showPl?'<a class="btn b-yt tm" data-stop href="'+esc(yt)+'" target="_blank" rel="noopener noreferrer">▶ '+fmt(s.time_sec)+'</a>':'')
-  +btnSp(s)+btnNe(s)+(s.spotify?'':btnAlt(s))+'</div></div>';
+  +'<div class="acts">'+btnSp(s)+btnNe(s)+(s.spotify?'':btnAlt(s))+'</div></div>';
 }
 /* ---------- YouTube live ---------- */
 function vfmt(n){if(!n)return"";return n>=1e8?(n/1e8).toFixed(1)+" 亿":n>=1e4?Math.round(n/1e4)+" 万":String(n);}
@@ -582,8 +584,7 @@ function playlist(id){
  setTab("pl");document.title=p.name+" · Harmonia 的八音盒";
  var src=p.source||{};
  var h='<div class="phead">'+plCover(p)+'<div>'+eyebrow("歌单")+'<h1>'+esc(p.name)+'</h1>'
-  +'<div class="meta">来源：'+(src.url?'<a href="'+esc(src.url)+'" target="_blank" rel="noopener noreferrer">'+esc(src.name)+'</a>':esc(src.name))+'</div>'
-  +'<div class="meta">收录日期：'+esc(p.added)+' · '+p.songs.length+' 首</div><div class="desc">'+esc(p.description)+'</div></div></div><div class="list">';
+  +'<div class="desc">'+esc(p.description)+'</div></div></div><div class="list">';
  p.songs.forEach(function(s,i){h+=rowHtml(p,s,i,false);});
  app.innerHTML=h+'</div>';
 }
