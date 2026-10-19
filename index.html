@@ -402,7 +402,7 @@ function btnSp(s,m){return s.spotify?'<a class="btn b-sp" data-kind="sp" data-st
 function btnNe(s,m){var l=s.netease&&LinkKit.neLinks(s.netease);return l?'<span class="nebox"><a class="btn b-ne" data-kind="ne" data-stop data-app="'+esc(l.app)+'" data-web="'+esc(l.web)+'" href="'+esc(l.desk)+'" title="电脑端会先打开网页版" target="_blank" rel="noopener noreferrer">'+(m?"网易云":"在网易云收听")+'</a><small class="nehint">电脑端会先打开网页版</small></span>':'<span class="btn b-off">网易云暂无</span>';}
 function btnAlt(s){return s.alt_url?'<a class="btn b-yt" data-stop href="'+esc(s.alt_url)+'" target="_blank" rel="noopener noreferrer">YouTube</a>':'';}
 /* 直接播放：存 Alist 路径；播放时再取签名链。优先无损 FLAC，没有才用最高质量 MP3。PLAY_RESOLVE 由技术侧提供 HTTPS 解析地址。 */
-var PLAY_RESOLVE="https://207.57.120.158.sslip.io:8443/music/resolve"; /* HTTPS resolve */
+var PLAY_RESOLVE="https://unsubscribe-enzyme-struggle-personnel.trycloudflare.com/music/resolve"; /* HTTPS resolve */
 function filePaths(s){
   var mp3=s.file_mp3||s.alist_mp3||"", flac=s.file_flac||s.alist_flac||"", path=s.alist_path||"";
   return {mp3:mp3,flac:flac,path:path,any:mp3||flac||path};
