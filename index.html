@@ -116,14 +116,28 @@ span.gt.more{cursor:default;color:var(--sub);border-color:var(--line)}
 .note b,.intro-full b,.dintro b,.introbox .txt b{color:var(--gold)}
 .links{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
 .links>.btn,.links>.nebox{flex:1 1 0;min-width:84px}
-.npbar{position:fixed;left:0;right:0;bottom:0;z-index:40;display:none;align-items:center;gap:10px;padding:8px 14px calc(8px + env(safe-area-inset-bottom));background:var(--card);border-top:1px solid var(--line);box-shadow:0 -6px 24px rgba(0,0,0,.25)}
+.npbar{position:fixed;left:0;right:0;bottom:0;z-index:40;display:none;flex-direction:column;gap:4px;padding:10px 12px calc(10px + env(safe-area-inset-bottom));background:var(--card);border-top:1px solid var(--line);box-shadow:0 -6px 24px rgba(0,0,0,.25)}
 .npbar.on{display:flex}
+.npbar .nprow{display:flex;align-items:center;gap:8px;width:100%}
 .npbar .npmeta{flex:1;min-width:0}
 .npbar .npt{font-weight:700;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .npbar .npa{font-size:12px;color:var(--sub);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.npbar audio{width:min(42vw,220px);height:32px}
-.npbar .npx{border:0;background:transparent;color:var(--sub);font-size:18px;cursor:pointer;padding:4px 8px}
-body.has-np{padding-bottom:calc(64px + env(safe-area-inset-bottom))}
+.npbar audio{position:absolute;width:0;height:0;opacity:0;pointer-events:none}
+.npbar .npctrl{display:flex;align-items:center;justify-content:center;gap:2px;flex:none}
+.npbar .npb{appearance:none;-webkit-appearance:none;border:0;background:transparent;color:var(--text);cursor:pointer;padding:6px;margin:0;display:inline-flex;align-items:center;justify-content:center;border-radius:50%;line-height:0}
+.npbar .npb:active{transform:scale(.92);opacity:.85}
+.npbar .npb svg{width:22px;height:22px;display:block;fill:currentColor}
+.npbar .npb.np-play svg{width:30px;height:30px}
+.npbar .npx{border:0;background:transparent;color:var(--sub);font-size:18px;cursor:pointer;padding:4px 6px;flex:none;line-height:1}
+.npbar .npseek{display:flex;align-items:center;gap:8px;width:100%;padding:0 2px}
+.npbar .nptm{font-size:11px;color:var(--sub);font-variant-numeric:tabular-nums;flex:none;min-width:34px}
+.npbar .nptm.r{text-align:right}
+.npbar .nptrack{flex:1;min-width:0;height:28px;display:flex;align-items:center;cursor:pointer;touch-action:none;-webkit-user-select:none;user-select:none}
+.npbar .npfill-bg{position:relative;width:100%;height:4px;border-radius:999px;background:var(--line)}
+.npbar .npfill{position:absolute;left:0;top:0;bottom:0;width:0;border-radius:999px;background:var(--accent);pointer-events:none}
+.npbar .npknob{position:absolute;top:50%;width:12px;height:12px;margin-top:-6px;margin-left:-6px;left:0;border-radius:50%;background:var(--accent);box-shadow:0 1px 3px rgba(0,0,0,.35);pointer-events:none;opacity:0;transition:opacity .12s}
+.npbar .nptrack:active .npknob,.npbar.seeking .npknob{opacity:1}
+body.has-np{padding-bottom:calc(112px + env(safe-area-inset-bottom))}
 body{padding-bottom:max(28px,env(safe-area-inset-bottom))}
 @media(max-width:620px){
  h1{font-size:28px}
@@ -252,6 +266,7 @@ body{padding-bottom:max(28px,env(safe-area-inset-bottom))}
 .pill-rated.p2{background:#d9a21b;color:#1a1300}
 .pill-rated.p3{background:#5b6472;color:#f8fafc}
 .toast{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + 24px);transform:translateX(-50%);background:rgba(20,16,10,.92);color:#f6ecd9;padding:9px 18px;border-radius:999px;font-size:13px;font-weight:600;z-index:80;display:none}
+body.has-np .toast{bottom:calc(120px + env(safe-area-inset-bottom,0px))}
 .intro-full{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px;font-size:14px;line-height:1.7;margin:10px 0}
 @media(min-width:900px){h1{font-size:34px}.svbody{max-width:640px}}
 
@@ -410,7 +425,8 @@ function filePaths(s){
 function btnDp(s,m){
   var f=filePaths(s);
   if(!f.any) return '<span class="btn b-off">直接播放暂无</span>';
-  return '<button type="button" class="btn b-dp" data-kind="dp" data-stop data-mp3="'+esc(f.mp3)+'" data-flac="'+esc(f.flac)+'" data-path="'+esc(f.path)+'" data-title="'+esc(s.title||'')+'" data-artist="'+esc(s.artist||'')+'">'+(m?"直接播放":"直接播放")+'</button>';
+  var qid=f.flac||f.mp3||f.path;
+  return '<button type="button" class="btn b-dp" data-kind="dp" data-stop data-qid="'+esc(qid)+'" data-mp3="'+esc(f.mp3)+'" data-flac="'+esc(f.flac)+'" data-path="'+esc(f.path)+'" data-title="'+esc(s.title||'')+'" data-artist="'+esc(s.artist||'')+'">'+(m?"直接播放":"直接播放")+'</button>';
 }
 function listenActs(s,m){return btnSp(s,m)+btnNe(s,m)+btnDp(s,m)+(s.spotify?'':btnAlt(s));}
 /* ---------- rows ---------- */
@@ -1072,15 +1088,54 @@ function doReload(e){
 var toastT=null;
 function toast(msg){var t=document.getElementById("toast");t.textContent=msg;t.style.display="block";clearTimeout(toastT);toastT=setTimeout(function(){t.style.display="none";},2200);}
 var ENV={win:window,doc:document,nav:navigator,setTimeout:function(f,n){return window.setTimeout(f,n);},clearTimeout:function(t){window.clearTimeout(t);}};
+var npQueue=[], npIdx=-1, npSeeking=false, npBusy=false;
+var ICON_PLAY='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>';
+var ICON_PAUSE='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 5h4v14H6zm8 0h4v14h-4z"/></svg>';
+function npFmt(sec){if(!isFinite(sec)||sec<0)return"0:00";var s=Math.floor(sec%60),m=Math.floor(sec/60);return m+":"+(s<10?"0":"")+s;}
+function npSetProgress(cur,dur){
+  var fill=document.getElementById("npfill"),knob=document.getElementById("npknob");
+  var pct=(dur&&isFinite(dur)&&dur>0)?Math.max(0,Math.min(1,cur/dur)):0;
+  fill.style.width=(pct*100)+"%";knob.style.left=(pct*100)+"%";
+  document.getElementById("npcur").textContent=npFmt(cur||0);
+  document.getElementById("npdur").textContent=(dur&&isFinite(dur)&&dur>0)?npFmt(dur):"0:00";
+  var tr=document.getElementById("nptrack");
+  if(tr){tr.setAttribute("aria-valuenow",String(Math.round(pct*100)));tr.setAttribute("aria-valuemax","100");}
+}
+function npSyncPlayBtn(){
+  var au=document.getElementById("npaudio"),btn=document.getElementById("nppause");
+  if(!btn)return;
+  var playing=!au.paused&&!au.ended&&!!au.getAttribute("src");
+  btn.innerHTML=playing?ICON_PAUSE:ICON_PLAY;
+  btn.setAttribute("aria-label",playing?"暂停":"播放");
+}
+function collectDpQueue(){
+  var list=[],seen={};
+  document.querySelectorAll("button[data-kind=dp]").forEach(function(b){
+    var mp3=b.getAttribute("data-mp3")||"",flac=b.getAttribute("data-flac")||"",path=b.getAttribute("data-path")||"";
+    if(!(mp3||flac||path))return;
+    var qid=b.getAttribute("data-qid")||(flac||mp3||path);
+    if(seen[qid])return;seen[qid]=1;
+    list.push({qid:qid,title:b.getAttribute("data-title")||"",artist:b.getAttribute("data-artist")||"",mp3:mp3,flac:flac,path:path});
+  });
+  return list;
+}
 function npShow(title,artist,url){
   var bar=document.getElementById("npbar");var au=document.getElementById("npaudio");
   document.getElementById("npt").textContent=title||"";document.getElementById("npa").textContent=artist||"";
-  au.src=url;bar.classList.add("on");document.body.classList.add("has-np");
-  var p=au.play();if(p&&p.catch)p.catch(function(){toast("无法自动播放，请点下方播放键");});
+  npSetProgress(0,0);au.src=url;bar.classList.add("on");document.body.classList.add("has-np");
+  var p=au.play();if(p&&p.catch)p.catch(function(){toast("无法自动播放，请点播放键");});
+  npSyncPlayBtn();
 }
-function npHide(){var bar=document.getElementById("npbar");var au=document.getElementById("npaudio");au.pause();au.removeAttribute("src");bar.classList.remove("on");document.body.classList.remove("has-np");}
-function resolvePlayUrl(btn){
-  var mp3=btn.getAttribute("data-mp3")||"";var flac=btn.getAttribute("data-flac")||"";var path=btn.getAttribute("data-path")||"";
+function npHide(){
+  var bar=document.getElementById("npbar");var au=document.getElementById("npaudio");
+  au.pause();au.removeAttribute("src");au.load();
+  bar.classList.remove("on");document.body.classList.remove("has-np");
+  npQueue=[];npIdx=-1;npSetProgress(0,0);npSyncPlayBtn();
+}
+function resolvePlayUrl(src){
+  var mp3,flac,path;
+  if(src&&src.getAttribute){mp3=src.getAttribute("data-mp3")||"";flac=src.getAttribute("data-flac")||"";path=src.getAttribute("data-path")||"";}
+  else{mp3=(src&&src.mp3)||"";flac=(src&&src.flac)||"";path=(src&&src.path)||"";}
   /* 优先无损；没有无损才用 MP3；再退到通用路径 */
   var prefer=flac||mp3||path;
   if(/^https?:\/\//i.test(prefer)) return Promise.resolve(prefer);
@@ -1088,12 +1143,43 @@ function resolvePlayUrl(btn){
   var q=PLAY_RESOLVE+(PLAY_RESOLVE.indexOf("?")>=0?"&":"?")+"path="+encodeURIComponent(prefer)+(flac?"&prefer=flac":(mp3?"&prefer=mp3":""));
   return fetch(q,{credentials:"omit"}).then(function(r){if(!r.ok)throw new Error("bad");return r.json();}).then(function(j){if(!j||!j.url)throw new Error("empty");return j.url;});
 }
+function npPlayIndex(i,opts){
+  if(!npQueue.length)return;
+  var n=npQueue.length;i=((i%n)+n)%n; /* wrap-around */
+  var item=npQueue[i];npIdx=i;npBusy=true;
+  document.getElementById("npt").textContent=item.title||"";document.getElementById("npa").textContent=item.artist||"";
+  document.getElementById("npbar").classList.add("on");document.body.classList.add("has-np");
+  if(!(opts&&opts.silent))toast("正在准备播放…");
+  resolvePlayUrl(item).then(function(url){
+    if(npIdx!==i)return; /* superseded */
+    npShow(item.title,item.artist,url);
+    if(!(opts&&opts.silent))toast("开始播放");
+  }).catch(function(){
+    toast("网盘播放通道还在接通，稍后再试（或先用网易云/Spotify）");
+  }).then(function(){npBusy=false;});
+}
+function npPrev(){if(!npQueue.length)return;npPlayIndex(npIdx<=0?npQueue.length-1:npIdx-1);}
+function npNext(){if(!npQueue.length)return;npPlayIndex(npIdx>=npQueue.length-1?0:npIdx+1);}
+function npToggle(){var au=document.getElementById("npaudio");if(!au.getAttribute("src"))return;if(au.paused){var p=au.play();if(p&&p.catch)p.catch(function(){});}else au.pause();npSyncPlayBtn();}
+function npSeekFromEvent(ev){
+  var au=document.getElementById("npaudio"),tr=document.getElementById("nptrack");
+  if(!au||!isFinite(au.duration)||au.duration<=0)return;
+  var rect=tr.getBoundingClientRect();
+  var clientX=(ev.touches&&ev.touches[0]?ev.touches[0].clientX:(ev.changedTouches&&ev.changedTouches[0]?ev.changedTouches[0].clientX:ev.clientX));
+  var pct=Math.max(0,Math.min(1,(clientX-rect.left)/rect.width));
+  au.currentTime=pct*au.duration;npSetProgress(au.currentTime,au.duration);
+}
 document.addEventListener("click",function(e){
  var dp=e.target.closest&&e.target.closest("button[data-kind=dp]");
  if(dp){e.preventDefault();e.stopPropagation();closeAlbum();
-  toast("正在准备播放…");
-  resolvePlayUrl(dp).then(function(url){npShow(dp.getAttribute("data-title"),dp.getAttribute("data-artist"),url);toast("开始播放");})
-   .catch(function(){toast("网盘播放通道还在接通，稍后再试（或先用网易云/Spotify）");});
+  npQueue=collectDpQueue();
+  var qid=dp.getAttribute("data-qid")||(dp.getAttribute("data-flac")||dp.getAttribute("data-mp3")||dp.getAttribute("data-path")||"");
+  var idx=0;for(var i=0;i<npQueue.length;i++){if(npQueue[i].qid===qid){idx=i;break;}}
+  if(!npQueue.length){
+    npQueue=[{qid:qid,title:dp.getAttribute("data-title")||"",artist:dp.getAttribute("data-artist")||"",mp3:dp.getAttribute("data-mp3")||"",flac:dp.getAttribute("data-flac")||"",path:dp.getAttribute("data-path")||""}];
+    idx=0;
+  }
+  npPlayIndex(idx);
   return;}
  var a=e.target.closest&&e.target.closest("a[data-kind]");if(!a)return;
  var kind=a.getAttribute("data-kind");
@@ -1179,9 +1265,55 @@ window.addEventListener("online",function(){syncState="idle";pullRatings();});
 document.addEventListener("visibilitychange",function(){if(!document.hidden&&Date.now()-lastSyncAt>60000)pullRatings();});
 document.getElementById("syncdot").onclick=function(e){e.stopPropagation();toast("正在同步…");pullRatings();};
 renderDot();pullRatings();
+/* now-playing bar controls (DOM may still be parsing — wait for ready) */
+window.npBindControls=function npBindControls(){
+ var au=document.getElementById("npaudio"),bar=document.getElementById("npbar"),tr=document.getElementById("nptrack");
+ if(!au||!bar||!tr||au._npBound)return;au._npBound=1;
+ document.getElementById("npx").onclick=function(e){e.stopPropagation();npHide();};
+ document.getElementById("npprev").onclick=function(e){e.stopPropagation();npPrev();};
+ document.getElementById("npnext").onclick=function(e){e.stopPropagation();npNext();};
+ document.getElementById("nppause").onclick=function(e){e.stopPropagation();npToggle();};
+ au.addEventListener("timeupdate",function(){if(!npSeeking)npSetProgress(au.currentTime,au.duration);});
+ au.addEventListener("loadedmetadata",function(){npSetProgress(au.currentTime,au.duration);});
+ au.addEventListener("play",npSyncPlayBtn);au.addEventListener("pause",npSyncPlayBtn);
+ au.addEventListener("ended",function(){npSyncPlayBtn();if(npQueue.length>1)npNext();});
+ function startSeek(ev){ev.preventDefault();ev.stopPropagation();npSeeking=true;bar.classList.add("seeking");npSeekFromEvent(ev);}
+ function moveSeek(ev){if(!npSeeking)return;ev.preventDefault();npSeekFromEvent(ev);}
+ function endSeek(ev){if(!npSeeking)return;ev.preventDefault();npSeekFromEvent(ev);npSeeking=false;bar.classList.remove("seeking");}
+ if(window.PointerEvent){
+  tr.addEventListener("pointerdown",function(ev){tr.setPointerCapture&&tr.setPointerCapture(ev.pointerId);startSeek(ev);});
+  tr.addEventListener("pointermove",moveSeek);
+  tr.addEventListener("pointerup",endSeek);tr.addEventListener("pointercancel",endSeek);
+ }else{
+  tr.addEventListener("touchstart",startSeek,{passive:false});
+  tr.addEventListener("touchmove",moveSeek,{passive:false});
+  tr.addEventListener("touchend",endSeek,{passive:false});
+  tr.addEventListener("mousedown",startSeek);
+  window.addEventListener("mousemove",moveSeek);
+  window.addEventListener("mouseup",endSeek);
+ }
+}
+if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",npBindControls);else npBindControls();
+
+
 })();
 </script>
-<div id="npbar" class="npbar" data-stop><div class="npmeta"><div class="npt" id="npt"></div><div class="npa" id="npa"></div></div><audio id="npaudio" controls playsinline></audio><button type="button" class="npx" id="npx" aria-label="关闭播放">×</button></div>
-<script>document.getElementById("npx").onclick=function(e){e.stopPropagation();npHide();};</script>
+<div id="npbar" class="npbar" data-stop>
+<div class="nprow">
+<div class="npmeta"><div class="npt" id="npt"></div><div class="npa" id="npa"></div></div>
+<div class="npctrl">
+<button type="button" class="npb" id="npprev" aria-label="上一首"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6h2v12H6zm3.5 6 8.5 6V6z"/></svg></button>
+<button type="button" class="npb np-play" id="nppause" aria-label="播放"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg></button>
+<button type="button" class="npb" id="npnext" aria-label="下一首"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 6h2v12h-2zM6 18l8.5-6L6 6z"/></svg></button>
+</div>
+<button type="button" class="npx" id="npx" aria-label="关闭播放">×</button>
+</div>
+<div class="npseek">
+<span class="nptm" id="npcur">0:00</span>
+<div class="nptrack" id="nptrack" role="slider" aria-label="进度" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div class="npfill-bg"><div class="npfill" id="npfill"></div><div class="npknob" id="npknob"></div></div></div>
+<span class="nptm r" id="npdur">0:00</span>
+</div>
+<audio id="npaudio" playsinline></audio>
+</div>
 </body>
 </html>
