@@ -839,18 +839,22 @@ function rebuildRatedFromDaily(){
   if(rt!==1&&!r.taste&&!f)return; // 评分改出「收藏」且没点心形 → 不在歌手页
   base.push(rt===r.rating&&f===!!r.fav?r:Object.assign({},r,{rating:rt,fav:f},x&&rt===1&&r.rating!==1?{rated_date:(x.v.at||"").slice(0,10)}:{}));
  });
- base.forEach(function(r){seen[fkey(r.artist,r.title)]=1;});
+ var seenNe={};base.forEach(function(r){seen[fkey(r.artist,r.title)]=1;var n=neId(r);if(n)seenNe[n]=1;});
  // 每日推荐里数据已是 1、但还没进 rated 的歌（评分「收藏」）
  DAILY.forEach(function(b){b.songs.forEach(function(s){var kk=fkey(s.artist,s.title);if(s.rating!==1||seen[kk])return;var x=ov[kk];if(x&&x.rating!==1)return;ov[kk]={rating:1,ts:0,v:{artist:s.artist,title:s.title,at:s.rated_at||b.date}};});});
  var add={};
  Object.keys(ov).forEach(function(kk){if(ov[kk].rating===1&&!seen[kk])add[kk]={v:ov[kk].v,rating:1};});
- Object.keys(fm).forEach(function(kk){if(fm[kk].on&&!seen[kk]&&!add[kk])add[kk]={v:fm[kk].v,rating:null};});
+ // 任何地方点了心形（每日推荐 / 每日歌手 / 歌单 / 详情页）、歌手页还没有的歌 → 临时放进歌手页（取消心形就拿掉）；已在歌手页的歌一律不动
+ Object.keys(fm).forEach(function(kk){if(!fm[kk].on||seen[kk]||add[kk])return;var n=neId(fm[kk].v)||neId(findSrc(fm[kk].v.artist,fm[kk].v.title));if(n&&seenNe[n])return;add[kk]={v:fm[kk].v,rating:null,ff:1};});
  Object.keys(add).forEach(function(kk){
   var v=add[kk].v,f=fv(kk,null);seen[kk]=1;
-  // 从曲库（歌手页/歌单/每日/取消收藏存档）回填链接与网盘文件（评分同步包里常缺链，勿写死空串）
-  var src=findSrc(v.artist,v.title);
+  // 从曲库（歌手页/歌单/每日/每日歌手/取消收藏存档）回填链接与网盘文件（评分同步包里常缺链，勿写死空串）
+  var src=findSrc(v.artist,v.title,neId(v));
+  if(src){var n0=neId(src);if(n0){if(seenNe[n0])return;seenNe[n0]=1;}}
   var e={artist:artCanon(v.artist),title:v.title,album:(src&&src.album)||v.album||"",year:(src&&src.year)||v.year||"",rating:add[kk].rating,fav:f,rated_date:(v.at||"").slice(0,10),rating_note:add[kk].rating===1?"来自每日推荐":"在八音盒里点了收藏",intro:(src&&src.intro)||v.intro||"",intro_date:(src&&src.intro_date)||"",intro_found:!!((src&&src.intro)||v.intro),spotify:(src&&src.spotify)||v.spotify||"",netease:(src&&src.netease)||v.netease||"",netease_note:(src&&src.netease_note)||v.netease_note||"",note:f?"八音盒收藏":"每日推荐评分「收藏」",cover:(src&&src.cover)||v.cover||"",genres:(src&&src.genres)||v.genres||[],live:(src&&src.live)||[],_local:1};
   if(src)["file_flac","file_mp3","alist_flac","alist_mp3","alist_path","album_links","story"].forEach(function(f){if(src[f])e[f]=src[f];});
+  if(!e.netease&&src&&src.netease_id)e.netease="https://music.163.com/song?id="+src.netease_id;
+  if(add[kk].ff)e.from_fav=1;
   base.push(e);
  });
  RATED=base;
@@ -871,9 +875,11 @@ function favId(o){var m=/track\/(\w+)/.exec(o.spotify||"");if(m)return "f"+m[1];
 function isFavKey(k){return k.indexOf(FAV_DATE+"|")===0;}
 /* 评分覆盖：只看日推评分记录（心形键不改评分） */
 function overlayMap(){var o=loadRates(),ov={};Object.keys(o).forEach(function(k){var v=o[k];if(!v||!v.title||isFavKey(k))return;var kk=fkey(v.artist,v.title);if(!ov[kk]||(ov[kk].ts||0)<=(v.ts||0))ov[kk]={rating:v.rating,ts:v.ts||0,v:v,k:k};});return ov;}
-function findSrc(artist,title){
- var kk=fkey(artist,title),hit=null;function chk(s){if(!hit&&s&&fkey(s.artist,s.title)===kk)hit=s;}
- RATED_ALL.forEach(chk);LIB.forEach(function(p){p.songs.forEach(chk);});DAILY.forEach(function(b){b.songs.forEach(chk);});(DATA.library.unfavorited||[]).forEach(chk);
+function neId(s){var m=/[?&]id=(\d+)/.exec((s&&s.netease)||"");return m?m[1]:(s&&s.netease_id?String(s.netease_id):"");}
+function eachSrc(fn){RATED_ALL.forEach(fn);LIB.forEach(function(p){p.songs.forEach(fn);});DAILY.forEach(function(b){b.songs.forEach(fn);});(DATA.library.daily_artists||[]).forEach(function(d){(d.songs||[]).forEach(fn);});(DATA.library.unfavorited||[]).forEach(fn);}
+function findSrc(artist,title,ne){
+ var kk=fkey(artist,title),hit=null;eachSrc(function(s){if(!hit&&s&&fkey(s.artist,s.title)===kk)hit=s;});
+ if(!hit&&ne)eachSrc(function(s){if(!hit&&s&&neId(s)===ne)hit=s;});
  return hit;
 }
 /* 收藏事件：ts ≥ FAV_SINCE 的心形点击（收藏/取消）+ 日推评分点击（点「收藏」=收藏，改成别的/取消=不再收藏），最后一次为准 */
@@ -930,6 +936,7 @@ function buildArtists(){
  RATED.forEach(function(r,i){r.artist=artCanon(r.artist);var a=m[r.artist];if(!a){a=m[r.artist]={name:r.artist,idx:[],c1:0,c2:0};order.push(a);}a.idx.push(i);if(r.rating===1)a.c1++;else a.c2++;});
  order.forEach(function(a){
   var meta=ARTMETA[a.name]||ARTMETA[artCanon(a.name)]||{};if(!meta.artist_image){a.name.split(" / ").forEach(function(p){if(!meta.artist_image&&ARTMETA[p])meta=ARTMETA[p];});}
+  if(!meta.artist_image){(DATA.library.daily_artists||[]).forEach(function(d){if(!meta.artist_image&&d.photo&&COV[d.photo]&&artCanon(d.name)===a.name)meta={artist_image:d.photo,note:meta.note||""};});}
   a.artist_image=meta.artist_image||"";
   a.spotify_artist_url=meta.spotify_artist_url||"";
   a.note=meta.note||"";
