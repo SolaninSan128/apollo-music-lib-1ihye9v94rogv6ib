@@ -16,6 +16,7 @@
 :root[data-theme=dark]{--bg:#14110d;--card:#1d1913;--card2:#28221a;--text:#f2eadd;--sub:#a99f8f;--line:#352d22;--accent:#e2663f;--accent-t:#1a0e08;--gold:#dbab3b;--sp:#1fbd5a;--sp-t:#04170b;--ne:#e5574a;--dp:#dbab3b;--dp-t:#1a1205;--shadow:0 1px 2px rgba(0,0,0,.45)}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0}
+html,body{overflow-x:clip} /* 任何超宽内容都不许把页面横向撑宽：撑宽后手机把布局视口放大，底部固定的播放条会跑到屏幕中间 */
 body{background:var(--bg);color:var(--text);font:15px/1.55 -apple-system,BlinkMacSystemFont,"PingFang SC","HarmonyOS Sans SC","Noto Sans SC","Noto Sans CJK SC","Source Han Sans SC","Microsoft YaHei","Hiragino Sans GB","Noto Sans JP",sans-serif;padding-bottom:env(safe-area-inset-bottom);-webkit-font-smoothing:antialiased}
 a{color:inherit}
 header{position:sticky;top:0;z-index:20;background:var(--bg);padding-top:env(safe-area-inset-top,0px)}
@@ -127,7 +128,7 @@ span.gt.more{cursor:default;color:var(--sub);border-color:var(--line)}
 .note b,.intro-full b,.dintro b,.introbox .txt b{color:var(--gold)}
 .links{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
 .links>.btn,.links>.nebox{flex:1 1 0;min-width:84px}
-.npbar{position:fixed;left:0;right:0;bottom:0;z-index:40;display:none;flex-direction:column;gap:4px;padding:10px 12px calc(10px + env(safe-area-inset-bottom));background:var(--card);border-top:1px solid var(--line);box-shadow:0 -6px 24px rgba(0,0,0,.25)}
+.npbar{position:fixed;left:0;right:0;bottom:0;z-index:70;-webkit-transform:translateZ(0);transform:translateZ(0);display:none;flex-direction:column;gap:4px;padding:10px 12px calc(10px + env(safe-area-inset-bottom));background:var(--card);border-top:1px solid var(--line);box-shadow:0 -6px 24px rgba(0,0,0,.25)}
 .npbar.on{display:flex}
 .npbar .nprow{display:flex;align-items:center;gap:8px;width:100%}
 .npbar .npmeta{flex:1;min-width:0}
@@ -150,6 +151,11 @@ span.gt.more{cursor:default;color:var(--sub);border-color:var(--line)}
 .npbar .nptrack:active .npknob,.npbar.seeking .npknob{opacity:1}
 body.has-np{padding-bottom:calc(112px + env(safe-area-inset-bottom))}
 body{padding-bottom:max(28px,env(safe-area-inset-bottom))}
+/* 播放条：始终贴视口最底、压在详情页/弹层之上；各滚动区底部留出播放条高度（--npH 由脚本实测） */
+body.has-np{padding-bottom:calc(var(--npH,112px) + 16px)}
+body.has-np .svbody{padding-bottom:calc(var(--npH,112px) + 24px)}
+body.has-np .apanel{padding-bottom:calc(var(--npH,112px) + 18px)}
+body.has-np .toast{bottom:calc(var(--npH,112px) + 12px)}
 @media(max-width:620px){
  h1{font-size:28px}
  .phead .cover{width:84px}
@@ -459,6 +465,7 @@ h2 .hbtn,h1 .hbtn{margin-left:10px;position:relative;top:-2px}
 .da-src{padding-top:9px;border-top:1px dashed color-mix(in srgb,var(--gold) 30%,var(--line));font-size:11.5px;color:var(--sub);line-height:1.9}
 .da-src i{font-style:normal;color:var(--gold);font-weight:800;margin-right:6px}
 .da-src a{color:var(--sub);text-decoration:underline;text-underline-offset:2px;margin-right:10px;white-space:nowrap}
+.da-src a{display:inline-block;max-width:100%;overflow:hidden;text-overflow:ellipsis;vertical-align:bottom} /* 来源链接可换行，别把页面撑宽（撑宽会让底部播放条跑位） */
 .da-row{display:grid;grid-template-columns:64px minmax(0,1fr) auto;gap:12px;align-items:center;padding:10px 0;border-top:1px solid var(--line)}
 .da-row:first-of-type{border-top:0;padding-top:2px}
 .da-sc{position:relative;width:64px;height:64px;border-radius:10px;overflow:hidden;background:var(--card2)}
@@ -1862,6 +1869,19 @@ window.npBindControls=function npBindControls(){
  au.addEventListener("error",function(){if(!au.getAttribute("src"))return;npLoadQid="";npSetPlaying(false);});
  au.addEventListener("emptied",function(){npSetPlaying(false);});
  au.addEventListener("ended",function(){npSetPlaying(false);if(npQueue.length>1)npNext();});
+ /* 播放条：实测高度写进 --npH，页面/详情页/弹层底部按它留白 */
+ var npRaf=0;
+ function npLayout(){npRaf=0;if(bar.classList.contains("on"))document.documentElement.style.setProperty("--npH",bar.offsetHeight+"px");}
+ function npLayoutSoon(){if(!npRaf)npRaf=requestAnimationFrame(npLayout);}
+ window.npLayoutSoon=npLayoutSoon;
+ if(window.ResizeObserver)new ResizeObserver(npLayoutSoon).observe(bar);
+ new MutationObserver(npLayoutSoon).observe(bar,{attributes:true,attributeFilter:["class"]});
+ window.addEventListener("resize",npLayoutSoon);window.addEventListener("orientationchange",npLayoutSoon);
+ if(window.visualViewport)visualViewport.addEventListener("resize",npLayoutSoon);
+ /* 搜索框收起键盘后，轻推一下滚动让 iOS 重算固定元素位置 */
+ document.addEventListener("focusout",function(e){var t=e.target;if(!t||(t.tagName!=="INPUT"&&t.tagName!=="TEXTAREA"))return;
+  setTimeout(function(){window.scrollTo(window.scrollX,window.scrollY);npLayoutSoon();},350);},true);
+ npLayoutSoon();
  /* 页面重绘/切页后重新套用播放状态 */
  if(window.MutationObserver){new MutationObserver(dpSchedule).observe(document.body,{childList:true,subtree:true});}
  function startSeek(ev){ev.preventDefault();ev.stopPropagation();npSeeking=true;bar.classList.add("seeking");npSeekFromEvent(ev);}
