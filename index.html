@@ -528,10 +528,15 @@ h2 .hbtn,h1 .hbtn{margin-left:10px;position:relative;top:-2px}
 }
 
 /* ---------- 寻声（2026-10-28） ---------- */
-.hbtn.xsbtn{margin-left:8px}
-.hbtn.xsbtn.wait{border-style:dashed;background:color-mix(in srgb,var(--gold) 8%,transparent)}
-.hbtn.xsbtn.on{background:var(--gold);color:var(--dp-t);border-color:var(--gold)}
-.xslab{display:inline-block;font-size:12px;font-weight:700;color:var(--gold);margin-left:6px;vertical-align:middle;position:relative;top:-2px;letter-spacing:.02em}
+.hbtn.xsbtn{margin-left:8px;transition:background .15s,color .15s,box-shadow .15s}
+.hbtn.xsbtn svg{width:21px;height:21px}
+.hbtn.xsbtn.done{background:linear-gradient(135deg,color-mix(in srgb,var(--gold) 88%,#fff),var(--gold));color:var(--dp-t);border-color:var(--gold);box-shadow:0 1px 8px color-mix(in srgb,var(--gold) 40%,transparent)}
+.hbtn.xsbtn.on .xw2{animation:xsw 2.4s ease-in-out infinite}
+@keyframes xsw{0%,100%{opacity:1}50%{opacity:.45}}
+@media (prefers-reduced-motion:reduce){.hbtn.xsbtn.on .xw2{animation:none}}
+.hbtns{display:inline-flex;align-items:center;white-space:nowrap;vertical-align:middle;margin-left:10px;position:relative;top:-2px}
+h2 .hbtns .hbtn,h1 .hbtns .hbtn{margin-left:0;top:0}
+h2 .hbtns .hbtn.xsbtn,h1 .hbtns .hbtn.xsbtn{margin-left:8px}
 .xs-quote{font-size:12px;color:var(--sub);margin:-4px 0 14px;letter-spacing:.04em}
 .xs-quote b{color:var(--gold);font-weight:700}
 .xsgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}
@@ -953,6 +958,7 @@ function hAttrs(on){return ' aria-pressed="'+(on?'true':'false')+'" aria-label="
 /* 列表行的心形收藏键（data-hfav：点击不进详情页，按所在行 data-sk 找歌） */
 function heartBtn(o){var on=isFav(o);return '<button type="button" class="hbtn'+(on?' on':'')+'" data-hfav data-stop'+hAttrs(on)+'>'+heartSvg(on)+'</button>';}
 /* 详情页标题旁：同款圆形心形 */
+function hBtns(o){return '<span class="hbtns">'+favBtn(o)+xsBtn(o)+'</span>';}
 function favBtn(o){var on=isFav(o);return '<button type="button" class="hbtn favbtn2'+(on?' on':'')+'" data-favbtn'+hAttrs(on)+'>'+heartSvg(on)+'</button>';}
 /* 我的收藏 = 只算 fav（心形 / 分界后日推点「收藏」）；评分「收藏」本身和口味条目都不算，按收藏日期新→旧 */
 function favList(){var fm=favMap(),a=[];RATED.forEach(function(r,i){if(r.fav)a.push({r:r,i:i});});function fd(r){var f=fm[fkey(r.artist,r.title)];return f?new Date(f.ts).toISOString().slice(0,10):(r.fav_date||r.rated_date||"");}a.sort(function(x,y){return String(fd(y.r)).localeCompare(String(fd(x.r)))||(y.i-x.i);});return a;}
@@ -1117,7 +1123,7 @@ function rateBar(date,id,cur){
 function songDaily(sg){
  var s=sg.s,b=sg.b;
  var r=getRate(b.date,s.id);
- var h='<div class="cover">'+cover(s)+'</div>'+eyebrow("每日推荐 · "+dayLabel(b.date).full+(b.theme_title?" · "+b.theme_title:""))+'<h2>'+esc(s.title)+favBtn(s)+xsBtn(s)+'</h2><div class="meta">'+artistLinksHtml(s)+'</div><dl>'
+ var h='<div class="cover">'+cover(s)+'</div>'+eyebrow("每日推荐 · "+dayLabel(b.date).full+(b.theme_title?" · "+b.theme_title:""))+'<h2>'+esc(s.title)+hBtns(s)+'</h2><div class="meta">'+artistLinksHtml(s)+'</div><dl>'
   +'<dt>专辑</dt><dd>'+albumDd(s)+'</dd>'+gFull(s)+'<dt>年份</dt><dd>'+esc(s.year||"—")+'</dd>'
   +'<dt>批次</dt><dd>'+esc(dayLabel(b.date).full)+'</dd>'
   +(b.theme_title?'<dt>主题</dt><dd>'+esc(b.theme_title)+'</dd>':'')
@@ -1434,20 +1440,31 @@ function xsRequest(o){
  all[k]={rating:1,ts:ts,at:new Date(ts).toISOString(),title:String(o.title||"").slice(0,80),artist:String(artCanon(o.artist)||"").slice(0,80),spotify:o.spotify||"",netease:o.netease||"",cover:o.cover||"",album:o.album||""};
  lsSet(LS_XS,all);var q=lsGet(LS_XSQ);q[k]=1;lsSet(LS_XSQ,q);xsFlush();
 }
-var XS_ICO='<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h2M7 8.5v7M10.5 6v12"/><circle cx="16.5" cy="11" r="3.6"/><path d="M19.2 13.7L21.5 16"/></svg>';
+function xsWithdraw(o){
+ var all=xsLoad(),k=xsKey(o),prev=all[k]||{},ts=Math.max(Date.now(),prev.ts?prev.ts+1:0);
+ all[k]=Object.assign({},prev,{rating:null,ts:ts,at:new Date(ts).toISOString(),title:String(prev.title||o.title||"").slice(0,80),artist:String(prev.artist||artCanon(o.artist)||"").slice(0,80)});
+ lsSet(LS_XS,all);var q=lsGet(LS_XSQ);q[k]=1;lsSet(LS_XSQ,q);xsFlush();
+}
+/* 音波扩散图标：中间一个点 + 左右各两道向外的弧线（线条粗细与收藏爱心一致）；已寻声/已做好时点变实心、弧线加粗 */
+function XS_SVG(on){
+ return '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="'+(on?'2.3':'2')+'" stroke-linecap="round" stroke-linejoin="round">'
+  +'<circle cx="12" cy="12" r="'+(on?'2.7':'2.3')+'" fill="'+(on?'currentColor':'none')+'"/>'
+  +'<path class="xw1" d="M15.2 8.2A5 5 0 0 1 15.2 15.8M8.8 8.2A5 5 0 0 0 8.8 15.8"/>'
+  +'<path class="xw2" d="M18 5.3A9 9 0 0 1 18 18.7M6 5.3A9 9 0 0 0 6 18.7"/></svg>';
+}
 function xsBtn(o){
  if(!o)return "";var pg=xsPageOf(o),rq=!pg&&xsReq(o);
- var lab=pg?"看寻声页":rq?"已登记寻声":"寻声";
- var tip=pg?"这首歌的寻声页已经做好，点一下直接去看":rq?"已登记，明天早上和每日推荐一起做好":"寻声：顺着这首歌往下找相近的音乐";
- return '<button type="button" class="hbtn xsbtn'+(pg?' on':rq?' wait':'')+'" data-xsbtn aria-label="'+esc(tip)+'" title="'+esc(tip)+'">'+XS_ICO+'</button><span class="xslab">'+lab+'</span>';
+ var tip=pg?"寻声 · 寻声页已做好，点一下去看":rq?"已寻声 · 明早和每日推荐一起做好，再点一下撤回":"寻声";
+ return '<button type="button" class="hbtn xsbtn'+(pg?' done':rq?' on':'')+'" data-xsbtn aria-pressed="'+(pg||rq?'true':'false')+'" aria-label="'+esc(tip)+'" title="'+esc(tip)+'">'+XS_SVG(!!(pg||rq))+'</button>';
 }
 function xsClick(o,btn){
  var pg=xsPageOf(o);
  if(pg){nav("#/xunsheng/"+encodeURIComponent(pg.id));return;}
- if(xsReq(o)){toast("已登记，明天早上和每日推荐一起做好");return;}
- xsRequest(o);
- if(btn){var lab=btn.nextElementSibling;btn.outerHTML=xsBtn(o);if(lab&&lab.classList.contains("xslab"))lab.remove();}
- toast("已登记，明天早上和每日推荐一起做好");
+ var had=!!xsReq(o);
+ if(had)xsWithdraw(o);else xsRequest(o);
+ if(btn)btn.outerHTML=xsBtn(o);
+ toast(had?"已撤回寻声":"已寻声，明天早上和每日推荐一起做好");
+ rerenderBg(); // 背后「寻声」栏目的待做列表跟着刷新
 }
 /* 寻声页里的歌、每日歌手代表作：登记进 SONGS，点进去也有详情页（也有「寻声」键） */
 function xsAll(x){var a=[],S=x.sections||{};function add(arr,grp){(arr||[]).forEach(function(s){a.push({s:s,grp:grp});});}
@@ -1455,7 +1472,7 @@ function xsAll(x){var a=[],S=x.sections||{};function add(arr,grp){(arr||[]).forE
 XS.forEach(function(x){xsAll(x).forEach(function(it,i){var k="x-"+x.id+"-"+i;it.s._xk=k;SONGS[k]={key:k,kind:"x",x:x,s:it.s,grp:it.grp,title:it.s.title,artist:it.s.artist,parent:"#/xunsheng/"+encodeURIComponent(x.id)};});});
 DA.forEach(function(d){(d.songs||[]).forEach(function(s,i){var k="da-"+d.date+"-"+i;if(!s.artist)s.artist=d.name;SONGS[k]={key:k,kind:"da",d:d,s:s,i:i,title:s.title,artist:s.artist,parent:"#/artistday/"+encodeURIComponent(d.date)};});});
 function songDA(sg){var s=sg.s,d=sg.d;
- var h='<div class="cover">'+daImg(s.cover,s.title)+'</div>'+eyebrow("每日歌手 · "+(d.name_native||d.name)+" · "+dayLabel(d.date).full)+'<h2>'+esc(s.title)+favBtn(s)+xsBtn(s)+'</h2><div class="meta">'+artistLinksHtml(s)+'</div><dl>'
+ var h='<div class="cover">'+daImg(s.cover,s.title)+'</div>'+eyebrow("每日歌手 · "+(d.name_native||d.name)+" · "+dayLabel(d.date).full)+'<h2>'+esc(s.title)+hBtns(s)+'</h2><div class="meta">'+artistLinksHtml(s)+'</div><dl>'
   +'<dt>专辑</dt><dd>'+esc(s.album||"—")+'</dd><dt>年份</dt><dd>'+esc(s.year||"—")+'</dd></dl>';
  if(s.why)h+='<div class="note"><b>为什么听</b>　'+esc(s.why)+'</div>';
  h+=storyHtml(s);
@@ -1463,7 +1480,7 @@ function songDA(sg){var s=sg.s,d=sg.d;
  return h;
 }
 function songX(sg){var s=sg.s,x=sg.x,sd=x.seed||{};
- var h='<div class="cover">'+cover(s)+'</div>'+eyebrow("寻声 · "+(sd.title||"")+" · "+sg.grp)+'<h2>'+esc(s.title)+favBtn(s)+xsBtn(s)+'</h2><div class="meta">'+artistLinksHtml(s)+'</div><dl>'
+ var h='<div class="cover">'+cover(s)+'</div>'+eyebrow("寻声 · "+(sd.title||"")+" · "+sg.grp)+'<h2>'+esc(s.title)+hBtns(s)+'</h2><div class="meta">'+artistLinksHtml(s)+'</div><dl>'
   +'<dt>专辑</dt><dd>'+esc(s.album||"—")+'</dd><dt>年份</dt><dd>'+esc(s.year||"—")+'</dd></dl>';
  if(s.why)h+='<div class="note"><b>为什么在这里</b>　'+esc(s.why)+'</div>';
  if(!filePaths(s).any)h+='<div class="xs-note">这首还没下到网盘，先用 Spotify / 网易云听。</div>';
@@ -1476,8 +1493,8 @@ function xsCard(x){var s=x.seed||{};
 }
 function xsHome(){
  setTab("xs");document.title="寻声 · Harmonia 的八音盒";
- var h='<h1>寻声</h1>'+XS_QUOTE+'<div class="lead">在任意一首歌的详情页点「寻声」，第二天早上就会多一页：这首歌你听到了什么、同一个人还有什么、同一个味道的别人、再往外走一步。</div>';
- h+=XS.length?'<div class="xsgrid">'+XS.map(xsCard).join("")+'</div>':'<div class="empty">还没有寻声页。打开一首歌，点标题旁的「寻声」。</div>';
+ var h='<h1>寻声</h1>'+XS_QUOTE+'<div class="lead">在任意一首歌的详情页点歌名旁的音波键（寻声），第二天早上就会多一页：这首歌你听到了什么、同一个人还有什么、同一个味道的别人、再往外走一步。</div>';
+ h+=XS.length?'<div class="xsgrid">'+XS.map(xsCard).join("")+'</div>':'<div class="empty">还没有寻声页。打开一首歌，点歌名旁的音波键。</div>';
  var o=xsLoad(),pend=Object.keys(o).filter(function(k){var v=o[k];return v&&v.rating===1&&!xsPageOf(v);});
  if(pend.length)h+='<div class="xspend"><div class="xs-sub">已登记、明天早上做好（'+pend.length+'）</div>'+pend.map(function(k){var v=o[k];return '<div class="xsp">《'+esc(v.title)+'》· '+esc(v.artist)+'<i>'+esc(String(v.at||"").slice(0,10))+' 登记</i></div>';}).join("")+'</div>';
  app.innerHTML=h;
@@ -1559,7 +1576,7 @@ function artistLinksHtml(o){
 }
 function songP(sg){var p=sg.p,s=sg.s;
  var yt=ytTime(p,s);
- var h='<div class="cover">'+cover(s)+'</div>'+eyebrow("歌单 · "+p.name)+'<h2>'+esc(s.title)+favBtn(s)+xsBtn(s)+'</h2><div class="meta">'+artistLinksHtml(s)+'</div><dl>'
+ var h='<div class="cover">'+cover(s)+'</div>'+eyebrow("歌单 · "+p.name)+'<h2>'+esc(s.title)+hBtns(s)+'</h2><div class="meta">'+artistLinksHtml(s)+'</div><dl>'
   +'<dt>专辑</dt><dd>'+albumDd(s)+'</dd>'+gFull(s)+'<dt>年份</dt><dd>'+esc(s.year||"—")+'</dd>'
   +'<dt>歌单</dt><dd>'+esc(p.name)+'</dd></dl>';
  h+=storyHtml(s);
@@ -1568,7 +1585,7 @@ function songP(sg){var p=sg.p,s=sg.s;
  return h;
 }
 function songR(sg){var r=sg.r;
- var h='<div class="cover">'+cover(r)+'</div>'+eyebrow((isFav(r)?"我的收藏 · ":"歌手 · ")+r.artist)+'<h2>'+esc(r.title)+favBtn(r)+xsBtn(r)+'</h2><div class="meta">'+artistLinksHtml(r)+'</div><dl>'
+ var h='<div class="cover">'+cover(r)+'</div>'+eyebrow((isFav(r)?"我的收藏 · ":"歌手 · ")+r.artist)+'<h2>'+esc(r.title)+hBtns(r)+'</h2><div class="meta">'+artistLinksHtml(r)+'</div><dl>'
   +'<dt>专辑</dt><dd>'+albumDd(r)+'</dd>'+gFull(r)+'<dt>年份</dt><dd>'+esc(r.year||"—")+'</dd>'
   +(r.rating!=null&&RL[r.rating]?'<dt>评分</dt><dd><span class="rt rt'+r.rating+'">'+RL[r.rating]+'</span></dd>'
    +'<dt>评分日期</dt><dd>'+(r.rated_date?esc(r.rated_date):"未能查到")+'</dd>'
