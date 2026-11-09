@@ -17,6 +17,7 @@ import shutil
 import sys
 from pathlib import Path
 
+from unified_writer.play_gate import append_ledger, assess
 from unified_writer.prod_guard import guard_library_mutation, release_if_owned
 from unified_writer.util import sha256_file
 
@@ -198,57 +199,63 @@ def _already(playlist: dict, song: dict, dest: Path, stat: dict) -> bool:
 _PAGE_ID = re.compile(r"^(?:[A-Za-z0-9_-]{11}|BV[0-9A-Za-z]{10})$")
 
 
-def _playback(item: dict, song: dict, dest: Path, stat: dict) -> dict:
-    """Prove the page's path, not that the public box can already play.
-
-    index.html ytApply keeps a row only when the id matches and file or
-    file_m4a is set, then resolvePlayUrl sends that path to PLAY_RESOLVE.
-    The list is /_ytlist/youtube.json, not library.json. The resolve service
-    source is not in this repository, so this does not claim a live play.
-    """
-    alist = str(song.get("file") or "")
-    local_ok = (
+def _file_matches(dest: Path, stat: dict) -> bool:
+    return bool(
         dest.is_file()
         and not dest.is_symlink()
         and dest.stat().st_size == stat["size"]
         and sha256_file(dest) == stat["sha256"]
-        and alist == item["audio"]["logical_dest"]
-        and _PAGE_ID.fullmatch(str(song.get("id") or "")) is not None
     )
-    if not local_ok or not (song.get("file") or song.get("file_m4a")):
-        raise ConsumerError("playback_path")
-    writer = item.get("writer") or {}
-    callbacks = bool(writer.get("direct_publish")) or bool(writer.get("direct_build"))
+
+
+def _playback(item: dict, song: dict, dest: Path, stat: dict, proof: dict) -> dict:
+    """Delete-gate fields are JSON booleans. served_playlist_verified is emitted only after the play gate."""
+    alist = str(song.get("file") or "")
+    matched = _file_matches(dest, stat) and alist == item["audio"]["logical_dest"] and bool(_PAGE_ID.fullmatch(str(song.get("id") or "")))
+    verified = bool(proof.get("ok")) and proof.get("commit_scope") == "served_playlist_verified" and matched is True
+    if verified:
+        scope = "served_playlist_verified"
+        box_playable = True
+        may_delete = True
+    else:
+        scope = "local_playlist"
+        box_playable = False
+        may_delete = False
+    if scope == "served_playlist_verified" and (box_playable is not True or matched is not True):
+        raise ConsumerError("receipt_withheld")
     return {
         "library_json_written": False,
         "playlist_role": "_ytlist",
-        "commit_scope": "local_playlist_plus_callback" if callbacks else "local_playlist",
-        "box_playable": False,
-        "playable_claim": "refused",
+        "commit_scope": scope,
+        "box_playable": box_playable,
+        "local_matches": True if matched else False,
         "playback": {
-            "page_keeps_row": True,
+            "page_keeps_row": bool(_PAGE_ID.fullmatch(str(song.get("id") or ""))),
             "alist_path": alist,
             "play_resolve_query": "path=" + alist,
+            "play_path": proof.get("play_path"),
+            "source": proof.get("source"),
             "local_path": str(dest),
-            "local_matches": True,
+            "local_matches": True if matched else False,
             "served_ytlist_url": "/_ytlist/youtube.json",
-            "resolve_checked": False,
-            "resolve_server_source": "not in this repository",
+            "resolve_checked": verified,
+            "resolver_sha256": proof.get("resolver_sha256"),
         },
         "video_delete": {
             "performed": False,
             "local_audio_deleted": False,
-            "pipeline_may_delete_temp_video": True,
+            "pipeline_may_delete_temp_video": may_delete,
             "condition": (
-                "the bili pipeline may delete only this job's temp video after it "
-                "rechecks the staged audio against this receipt's sha256, size, and duration. "
-                "A local playlist commit is not a claim that the public site can play the song."
+                "the downloader deletes the temp video only when box_playable is JSON true, "
+                "the commit scope is the served-playlist value, and local_matches is JSON true, "
+                "and queue, id, revision, hash, size, and duration match. "
+                "A local playlist scope with box_playable false keeps the video."
             ),
         },
     }
 
 
-def _receipt(item: dict, stat: dict, revision: str, song: dict, dest: Path) -> dict:
+def _receipt(item: dict, stat: dict, revision: str, song: dict, dest: Path, proof: dict) -> dict:
     if not _REVISION_RE.fullmatch(revision) or revision.lower() in _WEAK_REVISIONS:
         raise ConsumerError("revision")
     receipt = {
@@ -268,7 +275,7 @@ def _receipt(item: dict, stat: dict, revision: str, song: dict, dest: Path) -> d
             "logical_dest": item["audio"]["logical_dest"],
         },
     }
-    receipt.update(_playback(item, song, dest, stat))
+    receipt.update(_playback(item, song, dest, stat, proof))
     return receipt
 
 
@@ -294,6 +301,8 @@ def commit_queue_item(
     publisher=None,
     build_runner=None,
     expected_playlist_sha: str | None = None,
+    served_playlist: Path | None = None,
+    ledger_path: Path | None = None,
 ) -> dict:
     validate_queue(item)
     staged = Path(item["audio"]["staged_path"])
@@ -315,17 +324,34 @@ def commit_queue_item(
             raise ConsumerError("cas_mismatch")
         if not _already(playlist, song, dest, stat):
             _copy_audio(staged, dest, stat["sha256"], stat["size"])
+            if ledger_path is not None:
+                append_ledger(ledger_path, item["audio"]["logical_dest"], dest, stat["size"])
             _upsert(playlist, song)
             revision = _atomic_json(playlist_path, playlist)
             if os.environ.get("BILI_CONSUMER_CRASH_AFTER") == "commit":
                 raise SystemExit(91)
         else:
             revision = sha256_file(playlist_path)
+            if ledger_path is not None and dest.is_file():
+                append_ledger(ledger_path, item["audio"]["logical_dest"], dest, stat["size"])
         if bool(writer.get("direct_build")) and build_runner(item) is not True:
             raise ConsumerError("build_failed")
         if bool(writer.get("direct_publish")) and publisher(item) is not True:
             raise ConsumerError("publish_failed")
-        receipt = _receipt(item, stat, revision, song, dest)
+        proof = assess(
+            logical=item["audio"]["logical_dest"],
+            bvid=item["bvid"],
+            local_root=local_root,
+            ledger_path=ledger_path,
+            served_playlist=served_playlist,
+            size=stat["size"],
+        )
+        receipt = _receipt(item, stat, revision, song, dest, proof)
+        if receipt["commit_scope"] == "served_playlist_verified":
+            if receipt["box_playable"] is not True or receipt["local_matches"] is not True or not proof["ok"]:
+                raise ConsumerError("receipt_withheld")
+        elif receipt["commit_scope"] != "local_playlist" or receipt["box_playable"] is not False:
+            raise ConsumerError("receipt_withheld")
         path = _write_receipt(receipt_root, receipt)
         return {"ok": True, "receipt_path": str(path), "receipt": receipt, "video_deleted": False}
     finally:
@@ -339,6 +365,8 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--playlist", required=True)
     parser.add_argument("--local-root", required=True)
     parser.add_argument("--receipt-root", required=True)
+    parser.add_argument("--served-playlist", default="")
+    parser.add_argument("--ledger", default="")
     args = parser.parse_args(argv)
     item = json.loads(Path(args.queue).read_text(encoding="utf-8"))
 
@@ -359,6 +387,8 @@ def main(argv: list[str] | None = None) -> int:
             local_root=Path(args.local_root),
             receipt_root=Path(args.receipt_root),
             probe=probe,
+            served_playlist=Path(args.served_playlist) if args.served_playlist else None,
+            ledger_path=Path(args.ledger) if args.ledger else None,
         )
     except ConsumerError as exc:
         sys.stderr.write(exc.code + "\n")
@@ -368,7 +398,8 @@ def main(argv: list[str] | None = None) -> int:
     sys.stdout.write(json.dumps({
         "ok": True,
         "video_deleted": False,
-        "box_playable": False,
+        "box_playable": result["receipt"]["box_playable"],
+        "local_matches": result["receipt"]["local_matches"],
         "commit_scope": result["receipt"].get("commit_scope"),
         "receipt": result["receipt_path"],
     }) + "\n")

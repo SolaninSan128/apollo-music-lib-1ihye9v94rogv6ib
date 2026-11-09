@@ -158,9 +158,29 @@ class ReentrancyAndCasTests(unittest.TestCase):
         )
         self.assertEqual(proc.returncode, 0, proc.stderr)
         body = json.loads(proc.stdout)
-        self.assertEqual(body["package_revision"], "3")
+        self.assertEqual(body["package_revision"], "4")
         self.assertTrue(body["loaded_from"].startswith(str(PKG)))
         self.assertNotIn(str(shadow), body["loaded_from"])
+
+    def test_poll_host_comment_path_still_matches(self):
+        from unified_writer.patch_catalog import CATALOG
+        from unified_writer.patch_install import apply_spec
+        spec = next(item for item in CATALOG if item["id"] == "poll_ratings.py")
+        src = (FIX / "work" / "poll_ratings.py").read_text(encoding="utf-8")
+        host = src.replace("<CF_CRED_PATH>", "/home/box/.cf_token").replace('"<KV_NS_FILE>"', '"real-ns.txt"')
+        dest = Path(tempfile.mkdtemp(prefix="poll-host-")) / "poll_ratings.py"
+        dest.write_text(host, encoding="utf-8")
+        self.assertEqual(apply_spec(spec, dest, False, False), "patched")
+        patched = dest.read_text(encoding="utf-8")
+        self.assertIn("/home/box/.cf_token", patched)
+        self.assertIn("real-ns.txt", patched)
+        self.assertNotIn("<CF_CRED_PATH>", patched)
+        self.assertIn("guard_library_mutation", patched)
+        drifted = Path(tempfile.mkdtemp(prefix="poll-drift-")) / "poll_ratings.py"
+        drifted.write_text(host.replace("令牌不打印", "令牌会打印"), encoding="utf-8")
+        with self.assertRaises(SystemExit) as caught:
+            apply_spec(spec, drifted, False, False)
+        self.assertIn("drift", str(caught.exception))
 
     def test_poll_and_deploy_real_entrypoints(self):
         tree = Path(tempfile.mkdtemp(prefix="entries-"))
@@ -339,14 +359,14 @@ class BiliConsumerTests(unittest.TestCase):
 
     def _commit(self, item, **kwargs):
         from unified_writer.bili_consumer import commit_queue_item
-        return commit_queue_item(
-            item,
-            playlist_path=self.playlist,
-            local_root=self.local,
-            receipt_root=self.receipts,
-            probe=lambda path: 3.0,
-            **kwargs,
-        )
+        args = {
+            "playlist_path": self.playlist,
+            "local_root": self.local,
+            "receipt_root": self.receipts,
+            "probe": lambda path: 3.0,
+        }
+        args.update(kwargs)
+        return commit_queue_item(item, **args)
 
     def test_commit_receipt_idempotent_and_keeps_video(self):
         item = _queue(self.staged, self.digest)
@@ -357,10 +377,13 @@ class BiliConsumerTests(unittest.TestCase):
         self.assertEqual(body["songs"][0]["sha256"], self.digest)
         self.assertEqual(body["songs"][0]["storage"], "local")
         self.assertTrue(body["songs"][0]["file"].startswith("/115/音乐库/"))
-        self.assertFalse(first["receipt"]["box_playable"])
+        self.assertIs(first["receipt"]["box_playable"], False)
+        self.assertIs(first["receipt"]["local_matches"], True)
+        self.assertIs(first["receipt"]["video_delete"]["pipeline_may_delete_temp_video"], False)
         self.assertFalse(first["receipt"]["library_json_written"])
         self.assertEqual(first["receipt"]["commit_scope"], "local_playlist")
-        self.assertTrue(first["receipt"]["playback"]["local_matches"])
+        self.assertNotIn("served_playlist_verified", json.dumps(first["receipt"]))
+        self.assertIs(first["receipt"]["playback"]["local_matches"], True)
         self.assertEqual(first["receipt"]["playback"]["alist_path"], item["audio"]["logical_dest"])
         self.assertFalse(first["receipt"]["playback"]["resolve_checked"])
         self.assertFalse(first["receipt"]["video_delete"]["performed"])
@@ -372,6 +395,36 @@ class BiliConsumerTests(unittest.TestCase):
         self.assertEqual(second["receipt"], first["receipt"])
         self.assertEqual(self.playlist.read_bytes(), before)
         self.assertEqual(len(list(self.receipts.glob("*.json"))), 1)
+
+    def test_served_scope_requires_playlist_ledger_and_playback(self):
+        item = _queue(self.staged, self.digest)
+        ledger = self.tmp / "ledger.jsonl"
+        proved = self._commit(item, served_playlist=self.playlist, ledger_path=ledger)
+        receipt = proved["receipt"]
+        self.assertEqual(receipt["commit_scope"], "served_playlist_verified")
+        self.assertIs(receipt["box_playable"], True)
+        self.assertIs(receipt["local_matches"], True)
+        self.assertIs(receipt["video_delete"]["pipeline_may_delete_temp_video"], True)
+        self.assertEqual(receipt["queue_id"], item["queue_id"])
+        self.assertEqual(receipt["identity"], item["identity"])
+        self.assertEqual(receipt["audio"]["sha256"], self.digest)
+        self.assertEqual(receipt["audio"]["size"], self.staged.stat().st_size)
+        self.assertEqual(receipt["audio"]["duration_sec"], 3.0)
+        encoded = json.dumps(receipt)
+        self.assertIn('"box_playable": true', encoded)
+        self.assertIn('"local_matches": true', encoded)
+        self.assertNotIn('"true"', encoded)
+        self.assertEqual(self.video.read_bytes(), b"do-not-delete")
+        again = self._commit(item, served_playlist=self.playlist, ledger_path=ledger)
+        self.assertEqual(again["receipt"], receipt)
+        side = self.tmp / "not-served.json"
+        side.write_text('{"id":"youtube","songs":[]}\n', encoding="utf-8")
+        other = self.tmp / "other-receipts"
+        held = self._commit(item, served_playlist=side, ledger_path=ledger, receipt_root=other)
+        self.assertEqual(held["receipt"]["commit_scope"], "local_playlist")
+        self.assertIs(held["receipt"]["box_playable"], False)
+        self.assertNotIn("served_playlist_verified", json.dumps(held["receipt"]))
+        self.assertEqual(self.video.read_bytes(), b"do-not-delete")
 
     def test_mismatch_conflict_crash_and_missing_publisher(self):
         from unified_writer.bili_consumer import ConsumerError

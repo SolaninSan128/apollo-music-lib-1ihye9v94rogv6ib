@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "bili_hora_audio_receipt_v1",
   "title": "Bili hora audio commit receipt v1",
-  "description": "Dropped after a durable local youtube.json commit. verified means the staged audio matched; it does not mean the public box can play. box_playable is false unless a later check sees the served /_ytlist/youtube.json and the resolve service. The pipeline may delete only this job's temp video after it rechecks sha256, size, and duration. This writer does not delete video and does not write library.json.",
+  "description": "box_playable and local_matches are JSON booleans. The downloader deletes the temp video only when box_playable is true, commit_scope is served_playlist_verified, local_matches is true, and queue, id, revision, hash, size, and duration match. local_playlist with box_playable false keeps the video. served_playlist_verified is written only after the served _ytlist row, the local ledger, and the active resolver local path all match.",
   "type": "object",
   "required": ["schema", "queue_id", "identity", "bvid", "revision", "verified", "durable", "storage", "writer", "audio"],
   "additionalProperties": true,
@@ -16,6 +16,9 @@
     "durable": {"const": true},
     "storage": {"const": "local"},
     "writer": {"const": "harmonia-music-writer"},
+    "box_playable": {"type": "boolean"},
+    "local_matches": {"type": "boolean"},
+    "commit_scope": {"enum": ["local_playlist", "served_playlist_verified"]},
     "audio": {
       "type": "object",
       "required": ["sha256", "size", "duration_sec", "logical_dest"],

@@ -9,7 +9,7 @@ from __future__ import annotations
 GUARD = "HARMONIA_UNIFIED_GUARD_v1"
 GUARD_V2 = "HARMONIA_UNIFIED_GUARD_v2"
 GUARD_V3 = "HARMONIA_UNIFIED_GUARD_v3"
-PACKAGE_REVISION = "3"
+PACKAGE_REVISION = "4"
 
 CATALOG = [
     {
@@ -464,8 +464,11 @@ CATALOG = [
         "id": "poll_ratings.py",
         "src_sha256": "c85cb5381a9a91f729ae0b6857c9b14a81c3bc2a5fee35e827d92f0ecc0ee4c1",
         "pack_sha256": "c85cb5381a9a91f729ae0b6857c9b14a81c3bc2a5fee35e827d92f0ecc0ee4c1",
-        "body_sha256": "c803eb74fcd8891b674a109cf28e85b79d44ea4c6a376a2cce8862a393a03ef0",
+        "body_sha256": "090a8abb24470abd69ed56bad8736eb74f574c72d3ac769652ca7cff0ba14154",
         "secret_line_res": [
+            # Module docstring sentence that names the credential file.
+            # Sanitized fixture: <CF_CRED_PATH>. Host: the real path, same sentence.
+            r'^首选读 Worker GET /ratings（Durable Object 强一致）；失败时用 \S+ 读 KV 镜像（令牌不打印、不落盘）。$',
             r'^NSID=open\(os\.path\.join\(HERE,"\.\.","worker",.+\)\)\.read\(\)\.strip\(\)$',
             r'^TOK=open\(.+\)\.read\(\)\.strip\(\); ACC=open\(.+\)\.read\(\)\.strip\(\)$',
         ],
