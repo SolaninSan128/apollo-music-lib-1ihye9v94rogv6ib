@@ -7,6 +7,7 @@ Placeholders are never written back over host secrets.
 from __future__ import annotations
 
 GUARD = "HARMONIA_UNIFIED_GUARD_v1"
+GUARD_V2 = "HARMONIA_UNIFIED_GUARD_v2"
 
 CATALOG = [
     {
@@ -36,6 +37,33 @@ CATALOG = [
             {
                 "old": "            subprocess.check_call([\"git\",\"push\",\"origin\",\"main\"],cwd=DEPLOY)\n",
                 "new": "            _pg.ordinary_git_push(DEPLOY)  # HARMONIA_UNIFIED_GUARD_v1\n",
+            },
+        ],
+        "v2_anchors": [
+            {
+                "old": "    dry=\"--dry-run\" in sys.argv; publish=\"--publish\" in sys.argv\n    lib=json.load(open(LIBP,encoding=\"utf-8\"))\n",
+                "new": (
+                    "    dry=\"--dry-run\" in sys.argv; publish=\"--publish\" in sys.argv\n"
+                    "    import sys as _cas_sys, os as _cas_os, time as _cas_time\n"
+                    "    _cas_u = _cas_os.environ.get(\"HARMONIA_UNIFIED_WRITER\")\n"
+                    "    if _cas_u and _cas_u not in _cas_sys.path:\n"
+                    "        _cas_sys.path.insert(0, _cas_u)\n"
+                    "    _cas_ops = _cas_os.path.join(HERE, \"ops\")\n"
+                    "    if _cas_ops not in _cas_sys.path:\n"
+                    "        _cas_sys.path.insert(0, _cas_ops)\n"
+                    "    import unified_writer.prod_guard as _cas\n"
+                    "    _pg_sha = _cas.snapshot_sha(LIBP)  # HARMONIA_UNIFIED_GUARD_v2\n"
+                    "    if _cas_os.environ.get(\"HARMONIA_CAS_PAUSE_SEC\"):\n"
+                    "        _cas_time.sleep(float(_cas_os.environ[\"HARMONIA_CAS_PAUSE_SEC\"]))\n"
+                    "    lib=json.load(open(LIBP,encoding=\"utf-8\"))\n"
+                ),
+            },
+            {
+                "old": "    _pg.guard_library_mutation(\"ratings\", LIBP)  # HARMONIA_UNIFIED_GUARD_v1\n",
+                "new": (
+                    "    _pg.guard_library_mutation(\"ratings\", LIBP)  # HARMONIA_UNIFIED_GUARD_v1\n"
+                    "    _pg.require_unchanged(LIBP, _pg_sha)  # HARMONIA_UNIFIED_GUARD_v2\n"
+                ),
             },
         ],
     },
@@ -68,6 +96,33 @@ CATALOG = [
                     "    if changed:\n"
                     "        json.dump(lib, open(LIB, \"w\", encoding=\"utf-8\"), ensure_ascii=False, indent=2)\n"
                     "    tpl = open(os.path.join(HERE, \"template.html\"), encoding=\"utf-8\").read()\n"
+                ),
+            },
+        ],
+        "v2_anchors": [
+            {
+                "old": "    os.makedirs(COVERS, exist_ok=True)\n    lib = json.load(open(LIB, encoding=\"utf-8\"))\n",
+                "new": (
+                    "    os.makedirs(COVERS, exist_ok=True)\n"
+                    "    import sys as _cas_sys, os as _cas_os, time as _cas_time\n"
+                    "    _cas_u = _cas_os.environ.get(\"HARMONIA_UNIFIED_WRITER\")\n"
+                    "    if _cas_u and _cas_u not in _cas_sys.path:\n"
+                    "        _cas_sys.path.insert(0, _cas_u)\n"
+                    "    _cas_ops = _cas_os.path.join(HERE, \"work\", \"ops\")\n"
+                    "    if _cas_ops not in _cas_sys.path:\n"
+                    "        _cas_sys.path.insert(0, _cas_ops)\n"
+                    "    import unified_writer.prod_guard as _cas\n"
+                    "    _pg_sha = _cas.snapshot_sha(LIB)  # HARMONIA_UNIFIED_GUARD_v2\n"
+                    "    if _cas_os.environ.get(\"HARMONIA_CAS_PAUSE_SEC\"):\n"
+                    "        _cas_time.sleep(float(_cas_os.environ[\"HARMONIA_CAS_PAUSE_SEC\"]))\n"
+                    "    lib = json.load(open(LIB, encoding=\"utf-8\"))\n"
+                ),
+            },
+            {
+                "old": "    _pg.guard_library_mutation(\"build_push\", LIB)  # HARMONIA_UNIFIED_GUARD_v1\n",
+                "new": (
+                    "    _pg.guard_library_mutation(\"build_push\", LIB)  # HARMONIA_UNIFIED_GUARD_v1\n"
+                    "    _cas.require_unchanged(LIB, _pg_sha)  # HARMONIA_UNIFIED_GUARD_v2\n"
                 ),
             },
         ],

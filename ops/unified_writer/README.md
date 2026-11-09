@@ -14,7 +14,7 @@ Current production homepage and `PLAY_RESOLVE` (`https://harmonia.corgihora.bid/
 
 ## Install the production patches
 
-`bin/patch-install` checks each on-host sha256, writes `*.bak.unified-writer-v1`, and applies anchors that do not include redacted secret lines. A drifted file exits 76. It does not publish, download, or edit MODE.
+`bin/patch-install` checks each on-host sha256, writes `*.bak.unified-writer-v1`, and applies anchors that do not include redacted secret lines. It also copies this package to `<root>/work/ops/unified_writer`, which is the import path the patched scripts use. The real root `/workspace/harmonia-handoff/music-library` is allowed. A drifted file exits 76. It does not publish, download, or edit MODE. A v1 tree from the previous bundle is upgraded in place with the read-then-lock hash check; the first backup is left as it is.
 
 ```bash
 bin/patch-install --root /workspace/harmonia-handoff/music-library \

@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "bili_hora_audio_queue_v1",
+  "title": "Bili hora audio queue v1",
+  "type": "object",
+  "required": ["schema", "queue_id", "identity", "bvid", "media_id", "audio", "writer", "state"],
+  "additionalProperties": true,
+  "properties": {
+    "schema": {"const": "bili_hora_audio_queue_v1"},
+    "queue_id": {"type": "string"},
+    "identity": {"type": "string", "pattern": "^bili:2221540698:BV[0-9A-Za-z]{10}$"},
+    "bvid": {"type": "string"},
+    "media_id": {"const": 2221540698},
+    "state": {"const": "pending_commit"},
+    "audio": {
+      "type": "object",
+      "required": ["staged_path", "sha256", "size", "duration_sec", "extract_mode", "logical_dest"],
+      "properties": {
+        "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "size": {"type": "integer", "minimum": 1},
+        "duration_sec": {"type": "number", "exclusiveMinimum": 0},
+        "extract_mode": {"const": "copy"}
+      }
+    },
+    "writer": {
+      "type": "object",
+      "required": ["required", "direct_library_write", "direct_publish"],
+      "properties": {
+        "required": {"const": "harmonia-music-writer"},
+        "direct_library_write": {"const": false},
+        "direct_publish": {"const": false}
+      }
+    }
+  }
+}

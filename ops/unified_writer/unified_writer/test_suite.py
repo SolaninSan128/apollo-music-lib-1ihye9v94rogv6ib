@@ -683,13 +683,14 @@ class GuardTests(unittest.TestCase):
         )
         self.assertEqual(refused.returncode, 76, refused.stderr)
         self.assertEqual((pages / "index.html").read_text(encoding="utf-8"), "homepage")
-        handoff = self.tmp / "harmonia-handoff" / "box"
-        handoff.mkdir(parents=True)
-        refused_box = subprocess.run(
-            ["bash", str(BIN / "install.sh"), "--dest", str(handoff)],
+        music = self.tmp / "harmonia-handoff" / "music-library"
+        (music / "work" / "ops").mkdir(parents=True)
+        allowed = subprocess.run(
+            ["bash", str(BIN / "install.sh"), "--dest", str(music)],
             capture_output=True, text=True, check=False,
         )
-        self.assertEqual(refused_box.returncode, 76, refused_box.stderr)
+        self.assertEqual(allowed.returncode, 0, allowed.stderr)
+        self.assertTrue((music / "work" / "ops" / "unified_writer" / "prod_guard.py").is_file())
 
 
 if __name__ == "__main__":

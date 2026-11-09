@@ -36,6 +36,8 @@ rq.guarded_pages_push(deploy_dir)  # ordinary push
 
 Or `unified_writer.chain.LibraryChain` (interface 2). Do not call `arm_site_publish` from ratings, gapfill, or the daily scripts.
 
+Bili favorites use a separate consumer, `bili-audio-commit`. It is not one of these four routines and this file does not change their text. The pipeline deletes a temp video only after it validates a receipt; the consumer never deletes video and never writes 115.
+
 ## Not claimed
 
 - The four routines have not been updated to call this interface.

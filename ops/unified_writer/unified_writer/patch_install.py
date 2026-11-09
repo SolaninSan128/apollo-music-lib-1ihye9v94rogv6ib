@@ -8,7 +8,7 @@ import shutil
 import sys
 from pathlib import Path
 
-from unified_writer.patch_catalog import ADD_FILES, CATALOG, GUARD
+from unified_writer.patch_catalog import ADD_FILES, CATALOG, GUARD, GUARD_V2
 
 PKG = Path(__file__).resolve().parents[1]
 
@@ -45,8 +45,19 @@ def _backup(path: Path) -> None:
 
 
 def _already(text: str, spec: dict) -> bool:
-    """A file we already rewrote contains the guard marker, even if some context lines remain."""
+    """v2 files are finished. A v1 file still needs its v2 anchors."""
+    if spec.get("v2_anchors"):
+        return GUARD_V2 in text
     return spec.get("marker", GUARD) in text
+
+
+def _apply_anchors(text: str, anchors: list, label: str) -> str:
+    for anchor in anchors:
+        count = text.count(anchor["old"])
+        if count != 1:
+            raise SystemExit(f"anchor {label} count={count}")
+        text = text.replace(anchor["old"], anchor["new"], 1)
+    return text
 
 
 def apply_spec(spec: dict, dest: Path, fixture: bool, check_only: bool) -> str:
@@ -59,7 +70,9 @@ def apply_spec(spec: dict, dest: Path, fixture: bool, check_only: bool) -> str:
     allowed = {spec["src_sha256"]}
     if fixture:
         allowed.add(spec["pack_sha256"])
-    if digest not in allowed:
+    original = digest in allowed
+    upgraded = (not original) and GUARD in text and bool(spec.get("v2_anchors"))
+    if not original and not upgraded:
         raise SystemExit(f"drift {spec['id']}: {digest}")
     if spec.get("replace_from"):
         new = (PKG / spec["replace_from"]).read_text(encoding="utf-8")
@@ -71,17 +84,16 @@ def apply_spec(spec: dict, dest: Path, fixture: bool, check_only: bool) -> str:
             dest.chmod(0o755)
         return "replaced"
     updated = text
-    for anchor in spec["anchors"]:
-        count = updated.count(anchor["old"])
-        if count != 1:
-            raise SystemExit(f"anchor {spec['id']} count={count}")
-        updated = updated.replace(anchor["old"], anchor["new"], 1)
+    if original:
+        updated = _apply_anchors(updated, spec["anchors"], spec["id"])
+    if spec.get("v2_anchors"):
+        updated = _apply_anchors(updated, spec["v2_anchors"], spec["id"] + ":v2")
     if GUARD not in updated:
         raise SystemExit(f"patch lost marker: {spec['id']}")
     if not check_only:
         _backup(dest)
         dest.write_text(updated, encoding="utf-8")
-    return "patched"
+    return "upgraded" if upgraded else "patched"
 
 
 def add_file(spec: dict, dest: Path, check_only: bool) -> str:
@@ -135,7 +147,9 @@ def main(argv: list[str] | None = None) -> int:
         "formal_switch_blocked": True,
         "check_only": args.check,
         "files": report,
-        "note": "hashes matched and anchors applied or already present; not installed on a live host by the test suite",
+        "package": str(Path(args.root) / "work" / "ops" / "unified_writer") if args.layout == "host" else "",
+        "import_path": "work/ops (directory that contains the unified_writer package)",
+        "note": "package is copied to work/ops/unified_writer so patched scripts can import it; not a live switch",
     }
     sys.stdout.write(json.dumps(payload, ensure_ascii=False, indent=2) + "\n")
     return 0

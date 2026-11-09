@@ -8,7 +8,11 @@ Schedules are unchanged. See `ROUTINE_BOUNDARIES.md`. This package does not edit
 
 Do not change the four routine schedules, MODE, or the homepage from this package. Exit 75 means the library flock or the Windows publish claim is busy. Exit 76 means fail closed (CAS, fence, crash lease, or a publish without a claim).
 
-Set `HARMONIA_LIBRARY_LOCK` to `work/.library.lock` and `HARMONIA_UNIFIED_WRITER` to the directory that contains the `unified_writer` package (`work/ops` after `patch-install` copies it there).
+`patch-install` copies the importable package to `work/ops/unified_writer` on the real tree `/workspace/harmonia-handoff/music-library`. Patched scripts insert that `work/ops` directory on `sys.path`. Set `HARMONIA_LIBRARY_LOCK=work/.library.lock` only when the shell is not already sitting in `work/ops` (the installed `with_library_lock.sh` finds the lock itself).
+
+Outer `with_library_lock.sh` holds the flock and exports the contract, including the inherited lock fd. The inner `guard_library_mutation` sees that contract and does not open the lock file again, so ratings does not deadlock. A child that waits out `LOCK_WAIT` and then acquires is a normal grant, not a failure: keep any test holder alive for longer than `LOCK_WAIT` when the assertion is “must not write”.
+
+Set `HARMONIA_UNIFIED_WRITER` to `work/ops` if the process is not already importing from that directory.
 
 ## Fixed commands
 

@@ -14,10 +14,8 @@ DEST="$(realpath -m "$DEST")"
 case "$DEST" in
   /|/workspace|/workspace/) echo "refuse dest $DEST" >&2; exit 76 ;;
 esac
-if [[ "$DEST" == *harmonia-handoff* ]]; then
-  echo "refuse production handoff path: $DEST" >&2
-  exit 76
-fi
+# The live tree is /workspace/harmonia-handoff/music-library. That is the
+# intended install root. Refuse only the Pages site (index.html + img/).
 if [ -f "$DEST/index.html" ] && [ -d "$DEST/img" ]; then
   echo "refuse dest that looks like the Pages repo: $DEST" >&2
   exit 76
