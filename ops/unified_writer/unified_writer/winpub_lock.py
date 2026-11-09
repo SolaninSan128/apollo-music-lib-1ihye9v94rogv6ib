@@ -22,9 +22,77 @@ def _emit(obj: dict) -> None:
     sys.stderr.write("HARMONIA_STATUS\t" + json.dumps(obj, ensure_ascii=False) + "\n")
 
 
+def _refuse_publish(path: Path) -> None:
+    if not path.is_dir():
+        raise LockError("claim_dir_required", path=str(path))
+    text = str(path).replace("\\", "/").lower()
+    if "/harmonia/pub" in text or "/var/www/musicbox" in text or "/musicbox/_ytlist" in text:
+        raise LockError("refuse_publish_path", path=str(path))
+    if (path / "index.html").is_file():
+        raise LockError("refuse_publish_path", path=str(path))
+
+
+def _probe(parent: Path) -> int:
+    """Hold the mkdir claim and prove a second taker exits 75. Does not publish."""
+    import signal
+    import subprocess
+    _refuse_publish(parent)
+    stamp = parent / ".probe-token"
+    pkg_root = str(Path(__file__).resolve().parent.parent)
+    child_env = os.environ.copy()
+    child_env["PYTHONPATH"] = pkg_root + os.pathsep + child_env.get("PYTHONPATH", "")
+    holder = subprocess.Popen(
+        [sys.executable, "-m", "unified_writer.winpub_lock", "hold",
+         "--dir", str(parent), "--seconds", "30", "--wait", "0", "--stamp", str(stamp)],
+        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, env=child_env,
+    )
+    conflict = False
+    try:
+        time.sleep(0.4)
+        try:
+            meta = acquire_claim(
+                parent, token=secrets.token_hex(8), lease_sec=30, hostname=socket.gethostname(),
+                pid=os.getpid(), who="probe", cmd="win-claim-probe", resource_cas=None, cas_file=None,
+                wait_sec=0.2, remote_skew_sec=30,
+            )
+            release_claim(parent, meta["owner_token"])
+        except LockError as exc:
+            conflict = exc.exit_code == 75
+            if not conflict:
+                raise
+    finally:
+        if holder.poll() is None:
+            holder.send_signal(signal.SIGTERM)
+            try:
+                holder.wait(timeout=2)
+            except subprocess.TimeoutExpired:
+                holder.kill()
+                holder.wait(timeout=2)
+        meta_path = claim_dir(parent) / "meta.json"
+        token = ""
+        if meta_path.is_file():
+            try:
+                token = json.loads(meta_path.read_text(encoding="utf-8")).get("owner_token") or ""
+            except json.JSONDecodeError:
+                token = ""
+        if token:
+            try:
+                release_claim(parent, token)
+            except LockError:
+                pass
+        stamp.unlink(missing_ok=True)
+    if not conflict:
+        _emit({"ok": False, "published": False, "error": "probe_acquired"})
+        return 76
+    sys.stdout.write(json.dumps({
+        "ok": True, "published": False, "exit_code": 75, "mutex": "publish_conflict", "dir": str(parent),
+    }) + "\n")
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="winpub_lock")
-    parser.add_argument("action", choices=("hold", "release"))
+    parser.add_argument("action", choices=("hold", "release", "probe"))
     parser.add_argument("--dir", required=True)
     parser.add_argument("--lease", type=float, default=600)
     parser.add_argument("--wait", type=float, default=0.2)
@@ -38,6 +106,8 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
     token = args.token or secrets.token_hex(16)
     try:
+        if args.action == "probe":
+            return _probe(Path(args.dir))
         if args.action == "release":
             if not args.token:
                 raise LockError("fence_lost", reason="token_required")

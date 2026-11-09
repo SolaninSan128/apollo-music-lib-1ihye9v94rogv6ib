@@ -65,27 +65,27 @@ MISSING_FILES = (
     {
         "id": "make_deploy_variants.py",
         "expected_path": "work/make_deploy_variants.py",
-        "why": "fixed Pages/main package builder; source was not in the handoff, so only LibraryChain.run covers it",
+        "why": "not inspected; pass check --root. A GUARD_v3 comment without the guard calls is not an install",
     },
     {
         "id": "poll_ratings.py",
         "expected_path": "work/poll_ratings.py",
-        "why": "ratings fetch; source was not in the handoff. apply_ratings --publish is the mutation",
+        "why": "not inspected; pass check --root. A GUARD_v3 comment without the guard calls is not an install",
     },
     {
         "id": "ne_avail.py",
         "expected_path": "work/ne_avail.py",
-        "why": "availability probe used by 06:00; source was not in the handoff",
+        "why": "not inspected; pass check --root. stdout-only is the verified hash, not a missing-file guess",
     },
     {
         "id": "lomax_routines_not_updated",
         "expected_path": "",
-        "why": "06/07 prompts were read; this package does not edit them. Lomax saves the new calls",
+        "why": "Lomax reports the four safety sections saved at work/ops/LOMAX_CONTRACT.md; signature verification is underway and is not acceptance",
     },
     {
         "id": "windows_claim_not_proven_on_hora",
-        "expected_path": "C:/harmonia/pub/winpub",
-        "why": "ensure_win_claim was not executed against the live Windows host",
+        "expected_path": "C:/harmonia/cand/unified_writer",
+        "why": "mutex was previously verified on the cand path; claim lifecycle is not accepted and check does not publish",
     },
 )
 

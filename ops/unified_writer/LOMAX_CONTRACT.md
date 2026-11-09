@@ -29,18 +29,26 @@ After the hash-gated patch, `apply_ratings.py` also takes that same flock itself
 06:00 / 07:00, inside the generated script, after downloads:
 
 ```python
+import os
 import run_all_queues as rq
-rq.commit_library_json("library.json", lib, expected_sha=old_sha)
+rq.commit_library_json("library.json", lib, expected_sha=old_sha)  # refusal exits 76
 rq.guarded_build()
-rq.guarded_pages_push(deploy_dir)
+# HARMONIA_PAGES_DEPLOY is music-library/deploy, the git work tree.
+# A dated package directory is not that tree and is refused.
+rq.guarded_pages_publish(os.environ["HARMONIA_PAGES_DEPLOY"], ["index.html", "index_pages.html"], message)
 ```
 
-07:00 collision, instead of a 20-minute mtime check, once the prompt is saved:
+`guarded_pages_push` only runs `git push origin main`. It does not add or commit. `guarded_pages_publish` is the step that adds, commits, then pushes, in that order. Set `HARMONIA_MUSIC_ROOT` to the music-library directory. Relative lock and deploy paths join that root, not the process cwd.
+
+07:00 collision uses the kernel lock, not mtime. A missing or unresolvable lock stops (76). A held lock keeps waiting (75). This function does not create a lock file.
 
 ```python
 from unified_writer.prod_guard import collision_blocks
-if collision_blocks("work/.library.lock")["blocked"]:
-    raise SystemExit(0)
+state = collision_blocks("work/.library.lock")
+if state["exit_code"] == 76:
+    raise SystemExit(76)
+if state["blocked"]:
+    raise SystemExit(75)
 ```
 
 `make_deploy_variants.py` is run under `rq.guarded_build([sys.executable, "work/make_deploy_variants.py", pkg])` or `LibraryChain.run`. Its own source was not in the pack.

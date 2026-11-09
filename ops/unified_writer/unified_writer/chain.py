@@ -14,21 +14,27 @@ import json
 import os
 import subprocess
 import sys
+from pathlib import Path
 
 from unified_writer.prod_guard import (
     CHAIN_INTERFACE,
+    _die,
+    _require_pages_git_tree,
     collision_blocks,
     guard_library_mutation,
     ordinary_git_push,
     subprocess_lock_kwargs,
 )
-from unified_writer.util import sha256_file
+from unified_writer.util import LockError, sha256_file
 
 __all__ = [
     "CHAIN_INTERFACE",
     "LibraryChain",
     "collision_blocks",
     "commit_library_json",
+    "guarded_pages_commit",
+    "guarded_pages_publish",
+    "guarded_pages_push",
     "run_guarded",
 ]
 
@@ -40,14 +46,17 @@ def _refuse_force(argv: list) -> None:
 
 
 def commit_library_json(path, obj, expected_sha: str | None = None) -> str:
-    """Atomic library.json replace. expected_sha is the preimage CAS."""
+    """Atomic library.json replace. expected_sha is the preimage CAS.
+
+    Refusals raise SystemExit(76). The status line names library_json_only or cas_mismatch.
+    """
     path = os.fspath(path)
     if os.path.basename(path) != "library.json":
-        raise SystemExit("library_json_only")
+        _die(LockError("library_json_only", exit_code=76))
     guard_library_mutation("library_compat", path)
     if expected_sha is not None:
         if not os.path.isfile(path) or sha256_file(path) != expected_sha:
-            raise SystemExit("cas_mismatch")
+            _die(LockError("cas_mismatch", exit_code=76))
     blob = json.dumps(obj, ensure_ascii=False, indent=2) + "\n"
     tmp = path + ".tmp.%d" % os.getpid()
     with open(tmp, "w", encoding="utf-8") as handle:
@@ -89,7 +98,7 @@ class LibraryChain:
         path = os.fspath(path)
         expected = self._sha if os.path.basename(path) == "library.json" else None
         if expected is not None and sha256_file(path) != expected:
-            raise SystemExit("cas_mismatch")
+            _die(LockError("cas_mismatch", exit_code=76))
         digest = commit_library_json(path, obj, expected_sha=expected)
         if os.path.basename(path) == "library.json":
             self._sha = digest
@@ -99,6 +108,55 @@ class LibraryChain:
         return run_guarded(argv, cwd=cwd)
 
     def pages_push(self, deploy_dir: str) -> None:
-        """Ordinary `git push origin main` after the caller has committed. No --force."""
-        guard_library_mutation("build_push", None)
-        ordinary_git_push(deploy_dir)
+        """Push origin main of the anchored deploy git tree. Does not add or commit."""
+        guarded_pages_push(deploy_dir)
+
+    def pages_publish(self, deploy_dir: str, paths: list[str], message: str) -> None:
+        """git add, git commit, then git push origin main, in that order."""
+        guarded_pages_publish(deploy_dir, paths, message)
+
+
+def _git(cwd: str, args: list[str]) -> None:
+    proc = subprocess.run(["git", *args], cwd=cwd, check=False)
+    if proc.returncode != 0:
+        _die(LockError("git_failed", exit_code=76))
+
+
+def _safe_paths(paths: list[str]) -> list[str]:
+    if not paths:
+        _die(LockError("pages_paths_required", exit_code=76))
+    clean = []
+    for rel in paths:
+        text = os.fspath(rel)
+        parts = Path(text).parts
+        if not text or text.startswith("/") or ".." in parts or Path(text).is_absolute():
+            _die(LockError("pages_path_escape", exit_code=76))
+        clean.append(text)
+    return clean
+
+
+def guarded_pages_commit(deploy_dir: str, paths: list[str], message: str) -> str:
+    """git add then git commit in the real Pages deploy git tree. Not a dated package directory."""
+    if not str(message or "").strip():
+        _die(LockError("pages_message_required", exit_code=76))
+    root = _require_pages_git_tree(deploy_dir)
+    clean = _safe_paths(list(paths))
+    guard_library_mutation("build_push", None)
+    _git(root, ["add", "--", *clean])
+    _git(root, ["commit", "-m", message])
+    return root
+
+
+def guarded_pages_push(deploy_dir: str) -> str:
+    """git push origin main only. The directory must be the anchored deploy git tree."""
+    root = _require_pages_git_tree(deploy_dir)
+    guard_library_mutation("build_push", None)
+    ordinary_git_push(root)
+    return root
+
+
+def guarded_pages_publish(deploy_dir: str, paths: list[str], message: str) -> str:
+    """Add, commit, then push. Push is not used as a substitute for the commit."""
+    root = guarded_pages_commit(deploy_dir, paths, message)
+    guarded_pages_push(root)
+    return root

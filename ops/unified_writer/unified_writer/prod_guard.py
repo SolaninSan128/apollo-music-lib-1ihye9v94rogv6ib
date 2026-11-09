@@ -285,12 +285,85 @@ def subprocess_lock_kwargs() -> dict:
     return {"env": env, "pass_fds": tuple(fds)}
 
 
+def _require_pages_git_tree(deploy_dir: str) -> str:
+    """The Pages git work tree named by HARMONIA_PAGES_DEPLOY. A package directory is refused.
+
+    Relative paths join HARMONIA_MUSIC_ROOT only. The process cwd is not an anchor.
+    """
+    import subprocess
+    raw = os.fspath(deploy_dir)
+    path = Path(raw)
+    if not path.is_absolute():
+        anchor = os.environ.get("HARMONIA_MUSIC_ROOT") or ""
+        if not anchor or not Path(anchor).is_dir():
+            _die(LockError("pages_tree_unresolvable", exit_code=76))
+        path = Path(anchor) / path
+    if not path.is_dir() or not (path / ".git").exists():
+        _die(LockError("pages_not_git_tree", exit_code=76, reason="date_package_refused"))
+    expected = os.environ.get("HARMONIA_PAGES_DEPLOY") or ""
+    if not expected:
+        _die(LockError("pages_tree_unanchored", exit_code=76))
+    try:
+        expected_real = str(Path(expected).resolve(strict=True))
+        got = str(path.resolve(strict=True))
+    except OSError:
+        _die(LockError("pages_tree_unresolvable", exit_code=76))
+    if got != expected_real:
+        _die(LockError("pages_not_deploy_tree", exit_code=76))
+    proc = subprocess.run(
+        ["git", "-C", got, "rev-parse", "--show-toplevel"],
+        capture_output=True, text=True, check=False,
+    )
+    if proc.returncode != 0:
+        _die(LockError("pages_not_git_tree", exit_code=76))
+    top = proc.stdout.strip()
+    try:
+        if str(Path(top).resolve(strict=True)) != got:
+            _die(LockError("pages_not_git_tree", exit_code=76, reason="not_toplevel"))
+    except OSError:
+        _die(LockError("pages_not_git_tree", exit_code=76))
+    return got
+
+
 def ordinary_git_push(cwd: str, remote: str = "origin", branch: str = "main") -> None:
-    """Pages push. Refuses --force and plus refspecs."""
+    """Push the current branch to origin. Does not add or commit. Refuses --force."""
     import subprocess
     argv = ["git", "push", remote, branch]
     _refuse_force(argv)
-    subprocess.check_call(argv, cwd=cwd)
+    proc = subprocess.run(argv, cwd=cwd, check=False)
+    if proc.returncode != 0:
+        _die(LockError("git_failed", exit_code=76))
+
+
+def canonical_lock_path(lock_path: str | None = None) -> tuple[str | None, str]:
+    """Resolve a lock path without using the process cwd and without creating a file.
+
+    Absolute paths are used as given. A relative path is joined only to
+    HARMONIA_MUSIC_ROOT. An unanchored relative path does not fall back to cwd.
+    """
+    raw = lock_path if lock_path else (os.environ.get("HARMONIA_LIBRARY_LOCK") or "")
+    if not raw:
+        return None, "lock_absent"
+    path = Path(raw)
+    if not path.is_absolute():
+        anchor = os.environ.get("HARMONIA_MUSIC_ROOT") or ""
+        if not anchor or not Path(anchor).is_dir():
+            return None, "lock_unresolvable"
+        path = Path(anchor) / path
+    parent = path.parent
+    if not parent.is_dir():
+        return None, "lock_unresolvable"
+    try:
+        parent_real = parent.resolve(strict=True)
+    except OSError:
+        return None, "lock_unresolvable"
+    full = parent_real / path.name
+    if not full.is_file():
+        return str(full), "lock_absent"
+    try:
+        return str(full.resolve(strict=True)), ""
+    except OSError:
+        return str(full), "lock_unresolvable"
 
 
 def _refuse_force(argv: list) -> None:
@@ -300,13 +373,29 @@ def _refuse_force(argv: list) -> None:
 
 
 def collision_blocks(lock_path: str | None = None) -> dict:
-    """Real lock state for the 07:00 resume. This does not look at mtime."""
+    """Real lock state for the 07:00 resume. This does not look at mtime.
+
+    A missing or unresolvable lock is fail-closed (blocked, exit 76). It is not
+    treated as free, and this function does not create a lock file.
+    """
     import fcntl
-    path = lock_path or os.environ.get("HARMONIA_LIBRARY_LOCK") or ""
-    result = {"blocked": False, "reason": "free", "heuristic_mtime": False, "guard": GUARD}
-    if not path or not os.path.exists(path):
-        result["reason"] = "lock_absent"
+    resolved, problem = canonical_lock_path(lock_path)
+    result = {
+        "blocked": False,
+        "reason": "free",
+        "fail_closed": False,
+        "exit_code": 0,
+        "heuristic_mtime": False,
+        "guard": GUARD,
+        "lock_path": resolved or "",
+    }
+    if problem:
+        result["blocked"] = True
+        result["fail_closed"] = True
+        result["reason"] = problem
+        result["exit_code"] = 76
         return result
+    path = resolved or ""
     fd = os.open(path, os.O_RDWR)
     try:
         try:
@@ -314,6 +403,7 @@ def collision_blocks(lock_path: str | None = None) -> dict:
         except BlockingIOError:
             result["blocked"] = True
             result["reason"] = "lock_held"
+            result["exit_code"] = 75
             return result
         fcntl.flock(fd, fcntl.LOCK_UN)
     finally:
@@ -324,11 +414,15 @@ def collision_blocks(lock_path: str | None = None) -> dict:
             meta = json.loads(Path(meta_path).read_text(encoding="utf-8"))
         except (OSError, json.JSONDecodeError):
             result["blocked"] = True
+            result["fail_closed"] = True
             result["reason"] = "meta_corrupt_fail_closed"
+            result["exit_code"] = 76
             return result
         if time_unexpired(meta):
             result["blocked"] = True
+            result["fail_closed"] = True
             result["reason"] = "crash_lease_fail_closed"
+            result["exit_code"] = 76
             result["holder_pid"] = meta.get("pid")
     return result
 

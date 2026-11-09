@@ -224,6 +224,7 @@ def cmd_crash_orphan(args) -> int:
 
 def cmd_stop_write_check(args) -> int:
     import fcntl
+    from unified_writer.host_check import LIVE_BLOCKERS, classify_tree, load_evidence, routine_report
 
     library = Path(args.library_lock) if args.library_lock else None
     probe = {"free": True, "absent": True, "created": False}
@@ -251,23 +252,25 @@ def cmd_stop_write_check(args) -> int:
                 "note": "owner text is not the lock; kernel flock is",
                 "detail": owner.read_text(encoding="utf-8", errors="replace")[:200],
             })
-    for item in MISSING_FILES:
+    inspected = None
+    root = getattr(args, "root", "") or ""
+    if root:
+        inspected = classify_tree(Path(root))
+        proven = {item["id"] for item in inspected["installed"]}
+    else:
+        proven = set()
+    missing = [item for item in MISSING_FILES if item["id"] not in proven]
+    for item in missing:
         risks.append({
             "id": "missing:" + item["id"],
             "block_switch": True,
             "expected_path": item["expected_path"],
             "why": item["why"],
         })
-    risks.append({
-        "id": "win_helper_not_on_windows_host",
-        "block_switch": True,
-        "why": "mkdir claim was not installed on the Windows publish host in this run",
-    })
-    risks.append({
-        "id": "bare_legacy_writers_still_possible",
-        "block_switch": True,
-        "why": "unwrapped apply_ratings/build/publish/download can still write if invoked outside this guard",
-    })
+    for blocker in LIVE_BLOCKERS:
+        risks.append(blocker)
+    evidence = load_evidence(getattr(args, "evidence", "") or "")
+    install_completed = bool(inspected and inspected["anchors_installed"])
     mode = None
     if args.mode_file:
         mode_path = Path(args.mode_file)
@@ -282,15 +285,27 @@ def cmd_stop_write_check(args) -> int:
         "ok_to_claim_global": False,
         "production_installed": False,
         "deployed_this_run": False,
+        "install_completed": install_completed,
+        "ready_for_live": False,
+        "runtime_evidence_accepted": evidence["accepted"] is True,
+        "runtime_evidence_reason": evidence["reason"],
+        "anchors": inspected,
+        "blockers": list(LIVE_BLOCKERS),
+        "routines": routine_report(Path(root) if root else None),
+        "bili": {
+            "end_to_end_ran": False,
+            "deletion_gate_deployed": False,
+            "blocks_music_lock_install": False,
+            "note": "28-test deletion gate deploy is underway separately and is not music-lock install readiness",
+        },
         "library_lock": probe,
         "mode": mode,
         "mode_mutated": False,
-        "missing": list(MISSING_FILES),
+        "missing": missing,
         "risks": risks,
         "contract_version": 2,
         "chain_interface": 2,
         "ready_for_install": True,
-        "ready_for_live": False,
         "lock_order": ["library", "publish"],
         "schedules_preserved": {
             "daily_06": "CRON_TZ=Asia/Shanghai 0 6 * * *",
@@ -389,7 +404,16 @@ def build_parser() -> argparse.ArgumentParser:
     stop = sub.add_parser("stop-write-check")
     stop.add_argument("--library-lock", default="")
     stop.add_argument("--mode-file", default="")
+    stop.add_argument("--root", default="")
+    stop.add_argument("--evidence", default="")
     stop.set_defaults(func=cmd_stop_write_check)
+
+    check = sub.add_parser("check")
+    check.add_argument("--library-lock", default="")
+    check.add_argument("--mode-file", default="")
+    check.add_argument("--root", default="")
+    check.add_argument("--evidence", default="")
+    check.set_defaults(func=cmd_stop_write_check)
 
     commit = sub.add_parser("commit-cas")
     commit.add_argument("--path", required=True)

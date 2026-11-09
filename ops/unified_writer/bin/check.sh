@@ -5,20 +5,25 @@
 set -euo pipefail
 HERE="$(cd "$(dirname "$0")" && pwd)"
 if [ -d "$HERE/unified_writer" ]; then PYROOT="$HERE"; else PYROOT="$(cd "$HERE/.." && pwd)"; fi
-export PYTHONPATH="$PYROOT${PYTHONPATH:+:$PYTHONPATH}"
+# This tree wins over a stale work/ops/unified_writer on PYTHONPATH or in cwd.
+export HARMONIA_PATCH_ROOT="$PYROOT"
 
 if [ "${1:-}" = "--self-test" ]; then
   shift
+  export PYTHONPATH="$PYROOT${PYTHONPATH:+:$PYTHONPATH}"
   exec python3 -m unittest unified_writer.test_suite "$@"
 fi
 
-LOCK=""
-MODE=""
-while [ $# -gt 0 ]; do
-  case "$1" in
-    --library-lock) LOCK="$2"; shift 2 ;;
-    --mode-file) MODE="$2"; shift 2 ;;
-    *) echo "unknown arg: $1" >&2; exit 76 ;;
-  esac
-done
-exec python3 -m unified_writer.wrapper stop-write-check --library-lock "$LOCK" --mode-file "$MODE"
+exec python3 -c '
+import os, sys
+from pathlib import Path
+root = Path(os.environ["HARMONIA_PATCH_ROOT"]).resolve()
+sys.path.insert(0, str(root))
+import unified_writer
+loaded = Path(unified_writer.__file__).resolve()
+if loaded.parent.parent != root:
+    sys.stderr.write("stale_package_shadow: %s\n" % loaded)
+    raise SystemExit(76)
+from unified_writer.wrapper import main
+raise SystemExit(main(["check", *sys.argv[1:]]))
+' "$@"

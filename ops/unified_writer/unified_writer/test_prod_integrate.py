@@ -325,6 +325,8 @@ class ProdIntegrateTests(unittest.TestCase):
         library = self.tmp / "library.json"
         library.write_text("{}\n", encoding="utf-8")
         os.utime(library, None)
+        lock.parent.mkdir(parents=True, exist_ok=True)
+        lock.touch()
         self.assertFalse(collision_blocks(str(lock))["blocked"])
         self.assertFalse(collision_blocks(str(lock))["heuristic_mtime"])
         holder = spawn_flock(lock)
@@ -362,7 +364,7 @@ class ProdIntegrateTests(unittest.TestCase):
             chain._sha = "0" * 64
             with self.assertRaises(SystemExit) as caught:
                 chain.commit_json(library, {"v": 2})
-        self.assertEqual(str(caught.exception), "cas_mismatch")
+        self.assertEqual(caught.exception.code, 76)
         self.assertEqual(json.loads(library.read_text(encoding="utf-8"))["v"], 1)
 
 

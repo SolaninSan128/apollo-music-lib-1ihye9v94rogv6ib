@@ -51,6 +51,29 @@ bin/bili-audio-commit \
   --receipt-root <receipts-inbox>
 ```
 
+## Check, without flipping the live switch
+
+```bash
+ops/unified_writer/bin/check.sh \
+  --root /workspace/harmonia-handoff/music-library \
+  --mode-file /workspace/harmonia-handoff/music-library/work/ops/MODE.json \
+  --evidence /path/to/generated-checks.json
+```
+
+`install_completed` is true only when `poll_ratings.py` and `make_deploy_variants.py` contain the guard call lines, `ne_avail.py` matches the stdout-only sha256, and `work/ops/unified_writer/REVISION` is 4. A file that only mentions `HARMONIA_UNIFIED_GUARD_v3` stays missing. `ready_for_live` stays false. `formal_switch_blocked` stays true because routine acceptance, MODE, claim lifecycle, and raw writers are still blockers.
+
+`routines.reported_saved` records Lomax's report that all four get/update safety sections are saved, schedules, windows, and MODE unchanged. The contract path is `work/ops/LOMAX_CONTRACT.md`, not `work/ops/unified_writer/`. `routines.verified` stays false while independent signature verification is underway. This check does not invent acceptance evidence. Bili end-to-end is still unrun. The 28-test deletion-gate deploy is underway separately and does not change music-lock install readiness.
+
+`--evidence` is accepted only for `harmonia_install_evidence_v1` with these generated values as JSON booleans and integers, not strings: poll held-lock exit 75 and `snapshot_unchanged` true; make held-lock exit 75 and `output_dir_created` false; fd inherited exit 0 and `inherited` true; CAS exit 76 and `cas_mismatch` true. That file does not clear the live switch.
+
+Windows mutex, cand path only, no publish:
+
+```bash
+ops/unified_writer/bin/win-claim-probe --dir 'C:/harmonia/cand/unified_writer'
+```
+
+Exit 0 with `"exit_code": 75` and `"published": false` means the second taker was refused. `C:/harmonia/pub` and a directory that contains `index.html` are refused.
+
 ## Still not done on the hosts
 
 - This run did not install revision 4 and did not run the consumer on hora.

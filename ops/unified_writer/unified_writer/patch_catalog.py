@@ -196,6 +196,49 @@ CATALOG = [
                 ),
             },
         ],
+        "v3_anchors": [
+            {
+                "old": (
+                    "def guarded_pages_push(deploy_dir):\n"
+                    "    \"\"\"Ordinary Pages push. Not the hora main-site publish. HARMONIA_UNIFIED_GUARD_v1\"\"\"\n"
+                    "    import os as _os, sys as _sys\n"
+                    "    _u = _os.environ.get(\"HARMONIA_UNIFIED_WRITER\")\n"
+                    "    if _u and _u not in _sys.path:\n"
+                    "        _sys.path.insert(0, _u)\n"
+                    "    from unified_writer.prod_guard import guard_library_mutation, ordinary_git_push\n"
+                    "    guard_library_mutation(\"build_push\", None)\n"
+                    "    ordinary_git_push(deploy_dir)\n"
+                ),
+                "new": (
+                    "def guarded_pages_push(deploy_dir):\n"
+                    "    \"\"\"Push origin main of the anchored deploy git tree. Does not add or commit. HARMONIA_UNIFIED_GUARD_v3\"\"\"\n"
+                    "    import os as _os, sys as _sys\n"
+                    "    _u = _os.environ.get(\"HARMONIA_UNIFIED_WRITER\")\n"
+                    "    if _u and _u not in _sys.path:\n"
+                    "        _sys.path.insert(0, _u)\n"
+                    "    from unified_writer.chain import guarded_pages_push as _push\n"
+                    "    return _push(deploy_dir)\n"
+                    "\n"
+                    "def guarded_pages_commit(deploy_dir, paths, message):\n"
+                    "    \"\"\"git add then git commit in the deploy git tree. HARMONIA_UNIFIED_GUARD_v3\"\"\"\n"
+                    "    import os as _os, sys as _sys\n"
+                    "    _u = _os.environ.get(\"HARMONIA_UNIFIED_WRITER\")\n"
+                    "    if _u and _u not in _sys.path:\n"
+                    "        _sys.path.insert(0, _u)\n"
+                    "    from unified_writer.chain import guarded_pages_commit as _commit\n"
+                    "    return _commit(deploy_dir, paths, message)\n"
+                    "\n"
+                    "def guarded_pages_publish(deploy_dir, paths, message):\n"
+                    "    \"\"\"add, commit, then push origin main. Not a dated package directory. HARMONIA_UNIFIED_GUARD_v3\"\"\"\n"
+                    "    import os as _os, sys as _sys\n"
+                    "    _u = _os.environ.get(\"HARMONIA_UNIFIED_WRITER\")\n"
+                    "    if _u and _u not in _sys.path:\n"
+                    "        _sys.path.insert(0, _u)\n"
+                    "    from unified_writer.chain import guarded_pages_publish as _publish\n"
+                    "    return _publish(deploy_dir, paths, message)\n"
+                ),
+            },
+        ],
     },
     {
         "id": "harmonia_ops.py",
