@@ -3,5 +3,19 @@
 set -euo pipefail
 HERE="$(cd "$(dirname "$0")" && pwd)"
 if [ -d "$HERE/unified_writer" ]; then PYROOT="$HERE"; else PYROOT="$(cd "$HERE/.." && pwd)"; fi
-export PYTHONPATH="$PYROOT${PYTHONPATH:+:$PYTHONPATH}"
-exec python3 -m unified_writer.patch_install "$@"
+# Replace PYTHONPATH. A stale work/ops/unified_writer, or the current directory,
+# used to be imported first and report "already" without applying this revision.
+export HARMONIA_PATCH_ROOT="$PYROOT"
+exec python3 -c '
+import os, sys
+from pathlib import Path
+root = Path(os.environ["HARMONIA_PATCH_ROOT"]).resolve()
+sys.path.insert(0, str(root))
+import unified_writer
+loaded = Path(unified_writer.__file__).resolve()
+if loaded.parent.parent != root:
+    sys.stderr.write("stale_package_shadow: %s\n" % loaded)
+    raise SystemExit(76)
+from unified_writer.patch_install import main
+raise SystemExit(main())
+' "$@"

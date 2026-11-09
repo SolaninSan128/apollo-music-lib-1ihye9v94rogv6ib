@@ -76,7 +76,8 @@ class ProdIntegrateTests(unittest.TestCase):
 
     def test_install_is_idempotent_and_refuses_drift(self):
         again = install(self.tree)
-        self.assertTrue(all(item["status"] == "already" for item in again["files"]))
+        self.assertTrue(all(item["status"] in ("already", "stdout_only") for item in again["files"]))
+        self.assertIn("stdout_only", {item["status"] for item in again["files"]})
         self.assertFalse(again["ready_for_live"])
         drifted = self.tmp / "drift"
         shutil.copytree(FIX, drifted)

@@ -14,7 +14,9 @@ Current production homepage and `PLAY_RESOLVE` (`https://harmonia.corgihora.bid/
 
 ## Install the production patches
 
-`bin/patch-install` checks each on-host sha256, writes `*.bak.unified-writer-v1`, and applies anchors that do not include redacted secret lines. It also copies this package to `<root>/work/ops/unified_writer`, which is the import path the patched scripts use. The real root `/workspace/harmonia-handoff/music-library` is allowed. A drifted file exits 76. It does not publish, download, or edit MODE. A v1 tree from the previous bundle is upgraded in place with the read-then-lock hash check; the first backup is left as it is.
+`bin/patch-install` checks each on-host sha256, writes `*.bak.unified-writer-v1`, and applies anchors that do not include redacted secret lines. It also copies this package to `<root>/work/ops/unified_writer`, which is the import path the patched scripts use. The launcher puts that package first and exits 76 on `stale_package_shadow` if an older `work/ops/unified_writer` is what got imported. `--self-check` prints `package_revision` 3 and the path that was loaded. The real root `/workspace/harmonia-handoff/music-library` is allowed. A drifted file exits 76. It does not publish, download, or edit MODE.
+
+`poll_ratings.py` writes `work/ratings_snapshot.json`. The patch takes the library lock before that write and rechecks the snapshot hash. Credential path lines are excluded from the body hash, so host paths stay. `make_deploy_variants.py` writes the main-site package (`index.html`, `index_pages.html`, `img`, `SHA256`) and takes the same lock before creating the output directory. `harmonia_ops.py` passes the held lock fd into that child. `ne_avail.py` prints JSON and is not modified; a hash mismatch is drift. `run_unpatched` refuses all three instead of calling `poll_ratings` a read.
 
 ```bash
 bin/patch-install --root /workspace/harmonia-handoff/music-library \

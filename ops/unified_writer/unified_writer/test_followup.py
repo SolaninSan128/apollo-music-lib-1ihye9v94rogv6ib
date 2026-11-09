@@ -138,34 +138,154 @@ class ReentrancyAndCasTests(unittest.TestCase):
         self.assertFalse((work / "ratings_snapshot.json").exists())
         self.assertIn("changed", library.read_text(encoding="utf-8"))
 
-    def test_unpatched_tools_are_not_claimed_live(self):
+    def test_run_unpatched_refuses_the_old_read_label(self):
         from unified_writer.prod_guard import run_unpatched
-        root = Path(tempfile.mkdtemp(prefix="unpatched-"))
-        lock = root / "work" / ".library.lock"
-        os.environ["HARMONIA_LIBRARY_LOCK"] = str(lock)
-        os.environ["HARMONIA_LOCK_ROOT"] = str(root / "meta")
-        os.environ["LOCK_WAIT"] = "0.3"
-        os.environ["HARMONIA_UNIFIED_WRITER"] = str(PKG)
-        reader = root / "read.py"
-        reader.write_text("print('read-ok')\n", encoding="utf-8")
+        with self.assertRaises(SystemExit) as caught:
+            run_unpatched("poll_ratings.py", [sys.executable, "-c", "print('no')"])
+        self.assertEqual(caught.exception.code, 76)
+
+    def test_self_check_ignores_a_shadowing_package(self):
+        shadow = Path(tempfile.mkdtemp(prefix="shadow-"))
+        pkg = shadow / "unified_writer"
+        pkg.mkdir()
+        (pkg / "__init__.py").write_text("REVISION='old'\n", encoding="utf-8")
+        (pkg / "patch_install.py").write_text("raise SystemExit('shadowed')\n", encoding="utf-8")
+        env = os.environ.copy()
+        env["PYTHONPATH"] = str(shadow)
+        proc = subprocess.run(
+            ["bash", str(PKG / "bin" / "patch-install"), "--self-check"],
+            cwd=str(shadow), capture_output=True, text=True, env=env, check=False,
+        )
+        self.assertEqual(proc.returncode, 0, proc.stderr)
+        body = json.loads(proc.stdout)
+        self.assertEqual(body["package_revision"], "3")
+        self.assertTrue(body["loaded_from"].startswith(str(PKG)))
+        self.assertNotIn(str(shadow), body["loaded_from"])
+
+    def test_poll_and_deploy_real_entrypoints(self):
+        tree = Path(tempfile.mkdtemp(prefix="entries-"))
+        shutil.copytree(FIX, tree / "src")
+        install(tree / "src")
+        work = tree / "src" / "work"
+        ops = (tree / "src" / "ops" / "harmonia_ops.py").read_text(encoding="utf-8")
+        self.assertIn("make_deploy_variants.py", ops)
+        self.assertIn("subprocess_lock_kwargs()", ops)
+        self.assertIn("HARMONIA_UNIFIED_GUARD_v3", ops)
+        secret = (work / "poll_ratings.py").read_text(encoding="utf-8")
+        self.assertIn("<CF_CRED_PATH>", secret)
+        self.assertIn("<KV_NS_FILE>", secret)
+        self.assertIn("guard_library_mutation", secret)
+        self.assertEqual((work / "ne_avail.py").read_bytes(), (FIX / "work" / "ne_avail.py").read_bytes())
+        self.assertNotIn("open(", (work / "ne_avail.py").read_text(encoding="utf-8"))
+        worker = tree / "src" / "worker"
+        worker.mkdir()
+        (worker / "<KV_NS_FILE>").write_text("ns\n", encoding="utf-8")
+        (tree / "src" / "<CF_CRED_PATH>").write_text("token\n", encoding="utf-8")
+        snap = work / "ratings_snapshot.json"
+        snap.write_text("{}\n", encoding="utf-8")
+        fixture = tree / "incoming.json"
+        fixture.write_text('{"k":{"rating":1,"ts":1,"title":"t","artist":"a"}}\n', encoding="utf-8")
+        lock = work / ".library.lock"
+        env = base_env(
+            LOCK_WAIT="0.3",
+            HARMONIA_LIBRARY_LOCK=str(lock),
+            HARMONIA_LOCK_ROOT=str(tree / "meta"),
+            HARMONIA_POLL_FIXTURE=str(fixture),
+        )
         holder = hold(lock, 30)
         try:
             time.sleep(0.05)
-            read = run_unpatched("poll_ratings.py", [sys.executable, str(reader)])
-            self.assertEqual(read["returncode"], 0)
-            self.assertFalse(read["internally_guarded"])
-            self.assertEqual(read["lock"], "unchecked_read")
-            writer = root / "write.py"
-            marker = root / "wrote"
-            writer.write_text(f"open({str(marker)!r},'w').write('x')\n", encoding="utf-8")
-            with self.assertRaises(SystemExit) as caught:
-                run_unpatched("make_deploy_variants.py", [sys.executable, str(writer)])
+            blocked = subprocess.run(
+                [sys.executable, str(work / "poll_ratings.py")],
+                cwd=str(tree / "src"), capture_output=True, text=True, env=env, timeout=5, check=False,
+            )
         finally:
             stop(holder)
-            os.environ.pop("HARMONIA_LIBRARY_LOCK", None)
-            os.environ.pop("LOCK_WAIT", None)
-        self.assertEqual(caught.exception.code, 75)
-        self.assertFalse(marker.exists())
+        self.assertEqual(blocked.returncode, 75, blocked.stderr)
+        self.assertEqual(snap.read_text(encoding="utf-8"), "{}\n")
+        stale = subprocess.Popen(
+            [sys.executable, str(work / "poll_ratings.py")],
+            cwd=str(tree / "src"), stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True,
+            env=base_env(
+                LOCK_WAIT="0.3",
+                HARMONIA_LIBRARY_LOCK=str(lock),
+                HARMONIA_LOCK_ROOT=str(tree / "meta"),
+                HARMONIA_POLL_FIXTURE=str(fixture),
+                HARMONIA_CAS_PAUSE_SEC="1.2",
+            ),
+        )
+        time.sleep(0.4)
+        snap.write_text('{"changed": true}\n', encoding="utf-8")
+        _, err = stale.communicate(timeout=5)
+        self.assertEqual(stale.returncode, 76, err)
+        self.assertIn("cas_mismatch", err)
+        self.assertIn("changed", snap.read_text(encoding="utf-8"))
+        granted = subprocess.run(
+            ["bash", str(SHELL), sys.executable, str(work / "poll_ratings.py")],
+            cwd=str(tree / "src"), capture_output=True, text=True,
+            env=base_env(
+                LOCK_WAIT="0",
+                HARMONIA_LIBRARY_LOCK=str(lock),
+                HARMONIA_LOCK_ROOT=str(tree / "meta"),
+                HARMONIA_POLL_FIXTURE=str(fixture),
+            ),
+            timeout=8, check=False,
+        )
+        self.assertEqual(granted.returncode, 0, granted.stderr)
+        self.assertIn('"k"', snap.read_text(encoding="utf-8"))
+        root = tree / "src"
+        (work / "logo_block_20261024.html").write_text("<!-- logo20261024 start -->\n<link rel=\"icon\" href=\"/icons/a.svg\">\n<!-- logo20261024 end -->\n", encoding="utf-8")
+        (root / "index.html").write_text(
+            "<html>\n<head>\n</head>\n<body>https://harmonia.corgihora.bid/music/resolve</body>\n</html>\n",
+            encoding="utf-8",
+        )
+        img = root / "img" / "0123456789ab.png"
+        img.parent.mkdir()
+        img.write_bytes(b"png")
+        (work / "img_used.txt").write_text("img/0123456789ab.png\n", encoding="utf-8")
+        out = tree / "pkg"
+        held = hold(lock, 30)
+        try:
+            time.sleep(0.05)
+            refused = subprocess.run(
+                [sys.executable, str(work / "make_deploy_variants.py"), str(out)],
+                cwd=str(root), capture_output=True, text=True,
+                env=base_env(LOCK_WAIT="0.3", HARMONIA_LIBRARY_LOCK=str(lock), HARMONIA_LOCK_ROOT=str(tree / "meta")),
+                timeout=5, check=False,
+            )
+        finally:
+            stop(held)
+        self.assertEqual(refused.returncode, 75, refused.stderr)
+        self.assertFalse(out.exists())
+        moved = subprocess.Popen(
+            [sys.executable, str(work / "make_deploy_variants.py"), str(out)],
+            cwd=str(root), stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True,
+            env=base_env(
+                LOCK_WAIT="0.3",
+                HARMONIA_LIBRARY_LOCK=str(lock),
+                HARMONIA_LOCK_ROOT=str(tree / "meta"),
+                HARMONIA_CAS_PAUSE_SEC="1.2",
+            ),
+        )
+        time.sleep(0.4)
+        (root / "index.html").write_text(
+            "<html>\n<head>\n</head>\n<body>https://harmonia.corgihora.bid/music/resolve CHANGED</body>\n</html>\n",
+            encoding="utf-8",
+        )
+        _, derr = moved.communicate(timeout=5)
+        self.assertEqual(moved.returncode, 76, derr)
+        self.assertIn("cas_mismatch", derr)
+        self.assertFalse((out / "index.html").exists())
+        built = subprocess.run(
+            ["bash", str(SHELL), sys.executable, str(work / "make_deploy_variants.py"), str(tree / "pkg2")],
+            cwd=str(root), capture_output=True, text=True,
+            env=base_env(LOCK_WAIT="0", HARMONIA_LIBRARY_LOCK=str(lock), HARMONIA_LOCK_ROOT=str(tree / "meta")),
+            timeout=8, check=False,
+        )
+        self.assertEqual(built.returncode, 0, built.stderr)
+        self.assertTrue((tree / "pkg2" / "index.html").is_file())
+        self.assertTrue((tree / "pkg2" / "SHA256").is_file())
+        self.assertIn("harmonia.corgihora.bid/music/resolve", (tree / "pkg2" / "index.html").read_text(encoding="utf-8"))
 
 
 def _queue(staged: Path, digest: str, duration: float = 3.0) -> dict:
@@ -237,6 +357,14 @@ class BiliConsumerTests(unittest.TestCase):
         self.assertEqual(body["songs"][0]["sha256"], self.digest)
         self.assertEqual(body["songs"][0]["storage"], "local")
         self.assertTrue(body["songs"][0]["file"].startswith("/115/音乐库/"))
+        self.assertFalse(first["receipt"]["box_playable"])
+        self.assertFalse(first["receipt"]["library_json_written"])
+        self.assertEqual(first["receipt"]["commit_scope"], "local_playlist")
+        self.assertTrue(first["receipt"]["playback"]["local_matches"])
+        self.assertEqual(first["receipt"]["playback"]["alist_path"], item["audio"]["logical_dest"])
+        self.assertFalse(first["receipt"]["playback"]["resolve_checked"])
+        self.assertFalse(first["receipt"]["video_delete"]["performed"])
+        self.assertFalse((self.tmp / "library.json").exists())
         placed = self.local / "歌单" / "youtube" / "live clip [BV1A2B3C4D5E].m4a"
         self.assertEqual(placed.read_bytes(), b"audio-bytes-v1")
         before = self.playlist.read_bytes()

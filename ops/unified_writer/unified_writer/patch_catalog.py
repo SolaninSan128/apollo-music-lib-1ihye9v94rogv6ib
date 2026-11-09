@@ -8,6 +8,8 @@ from __future__ import annotations
 
 GUARD = "HARMONIA_UNIFIED_GUARD_v1"
 GUARD_V2 = "HARMONIA_UNIFIED_GUARD_v2"
+GUARD_V3 = "HARMONIA_UNIFIED_GUARD_v3"
+PACKAGE_REVISION = "3"
 
 CATALOG = [
     {
@@ -279,6 +281,19 @@ CATALOG = [
                 ),
             },
         ],
+        "v3_anchors": [
+            {
+                "old": (
+                    "            r = subprocess.run([sys.executable, os.path.join(ctx.work, \"make_deploy_variants.py\"), pkg], cwd=ctx.root,\n"
+                    "                               capture_output=True, text=True, timeout=900)\n"
+                ),
+                "new": (
+                    "            import unified_writer.prod_guard as _pg\n"
+                    "            r = subprocess.run([sys.executable, os.path.join(ctx.work, \"make_deploy_variants.py\"), pkg], cwd=ctx.root,\n"
+                    "                               capture_output=True, text=True, timeout=900, **_pg.subprocess_lock_kwargs())  # HARMONIA_UNIFIED_GUARD_v3\n"
+                ),
+            },
+        ],
     },
     {
         "id": "with_library_lock.sh",
@@ -444,6 +459,101 @@ CATALOG = [
                 ),
             },
         ],
+    },
+    {
+        "id": "poll_ratings.py",
+        "src_sha256": "c85cb5381a9a91f729ae0b6857c9b14a81c3bc2a5fee35e827d92f0ecc0ee4c1",
+        "pack_sha256": "c85cb5381a9a91f729ae0b6857c9b14a81c3bc2a5fee35e827d92f0ecc0ee4c1",
+        "body_sha256": "c803eb74fcd8891b674a109cf28e85b79d44ea4c6a376a2cce8862a393a03ef0",
+        "secret_line_res": [
+            r'^NSID=open\(os\.path\.join\(HERE,"\.\.","worker",.+\)\)\.read\(\)\.strip\(\)$',
+            r'^TOK=open\(.+\)\.read\(\)\.strip\(\); ACC=open\(.+\)\.read\(\)\.strip\(\)$',
+        ],
+        "fixture": "work/poll_ratings.py",
+        "host": "work/poll_ratings.py",
+        "root": "music",
+        "done_marker": GUARD_V3,
+        "anchors": [
+            {
+                "old": "def main():\n    save=\"--no-save\" not in sys.argv\n    new=fetch_all()\n",
+                "new": (
+                    "def main():\n"
+                    "    save=\"--no-save\" not in sys.argv\n"
+                    "    import sys as _cas_sys, os as _cas_os, time as _cas_time, json as _cas_json\n"
+                    "    _cas_u = _cas_os.environ.get(\"HARMONIA_UNIFIED_WRITER\")\n"
+                    "    if _cas_u and _cas_u not in _cas_sys.path:\n"
+                    "        _cas_sys.path.insert(0, _cas_u)\n"
+                    "    _cas_ops = _cas_os.path.join(HERE, \"ops\")\n"
+                    "    if _cas_ops not in _cas_sys.path:\n"
+                    "        _cas_sys.path.insert(0, _cas_ops)\n"
+                    "    import unified_writer.prod_guard as _cas\n"
+                    "    _pg_sha = _cas.snapshot_sha(SNAP) if _cas_os.path.isfile(SNAP) else None  # HARMONIA_UNIFIED_GUARD_v3\n"
+                    "    if _cas_os.environ.get(\"HARMONIA_CAS_PAUSE_SEC\"):\n"
+                    "        _cas_time.sleep(float(_cas_os.environ[\"HARMONIA_CAS_PAUSE_SEC\"]))\n"
+                    "    if _cas_os.environ.get(\"HARMONIA_POLL_FIXTURE\"):\n"
+                    "        new = _cas_json.load(open(_cas_os.environ[\"HARMONIA_POLL_FIXTURE\"], encoding=\"utf-8\"))\n"
+                    "    else:\n"
+                    "        new=fetch_all()\n"
+                ),
+            },
+            {
+                "old": "    if save:\n        json.dump(new,open(SNAP,\"w\",encoding=\"utf-8\"),ensure_ascii=False,indent=1,sort_keys=True)\n",
+                "new": (
+                    "    if save:\n"
+                    "        _cas.guard_library_mutation(\"ratings\", SNAP if _cas_os.path.isfile(SNAP) else None)  # HARMONIA_UNIFIED_GUARD_v3\n"
+                    "        _cas.require_unchanged(SNAP, _pg_sha)  # HARMONIA_UNIFIED_GUARD_v3\n"
+                    "        json.dump(new,open(SNAP,\"w\",encoding=\"utf-8\"),ensure_ascii=False,indent=1,sort_keys=True)\n"
+                ),
+            },
+        ],
+    },
+    {
+        "id": "make_deploy_variants.py",
+        "src_sha256": "23c9f0451b3472dadc50bdd9bec2832ad36aed6eaf1c9ff5bf1355fae772b13b",
+        "pack_sha256": "23c9f0451b3472dadc50bdd9bec2832ad36aed6eaf1c9ff5bf1355fae772b13b",
+        "fixture": "work/make_deploy_variants.py",
+        "host": "work/make_deploy_variants.py",
+        "root": "music",
+        "done_marker": GUARD_V3,
+        "anchors": [
+            {
+                "old": "def main(out):\n    src = open(os.path.join(ROOT, \"index.html\"), encoding=\"utf-8\").read()\n",
+                "new": (
+                    "def main(out):\n"
+                    "    import sys as _cas_sys, os as _cas_os, time as _cas_time\n"
+                    "    _cas_u = _cas_os.environ.get(\"HARMONIA_UNIFIED_WRITER\")\n"
+                    "    if _cas_u and _cas_u not in _cas_sys.path:\n"
+                    "        _cas_sys.path.insert(0, _cas_u)\n"
+                    "    _cas_ops = _cas_os.path.join(HERE, \"ops\")\n"
+                    "    if _cas_ops not in _cas_sys.path:\n"
+                    "        _cas_sys.path.insert(0, _cas_ops)\n"
+                    "    import unified_writer.prod_guard as _cas\n"
+                    "    _index = os.path.join(ROOT, \"index.html\")\n"
+                    "    _pg_sha = _cas.snapshot_sha(_index)  # HARMONIA_UNIFIED_GUARD_v3\n"
+                    "    if _cas_os.environ.get(\"HARMONIA_CAS_PAUSE_SEC\"):\n"
+                    "        _cas_time.sleep(float(_cas_os.environ[\"HARMONIA_CAS_PAUSE_SEC\"]))\n"
+                    "    src = open(_index, encoding=\"utf-8\").read()\n"
+                ),
+            },
+            {
+                "old": "    os.makedirs(out, exist_ok=True)\n",
+                "new": (
+                    "    _cas.guard_library_mutation(\"build_push\", os.path.join(ROOT, \"index.html\"))  # HARMONIA_UNIFIED_GUARD_v3\n"
+                    "    _cas.require_unchanged(os.path.join(ROOT, \"index.html\"), _pg_sha)  # HARMONIA_UNIFIED_GUARD_v3\n"
+                    "    os.makedirs(out, exist_ok=True)\n"
+                ),
+            },
+        ],
+    },
+    {
+        "id": "ne_avail.py",
+        "src_sha256": "41ca830fe55815001898d3cad884c430333aa62882a35adf3a7b338477b1510b",
+        "pack_sha256": "41ca830fe55815001898d3cad884c430333aa62882a35adf3a7b338477b1510b",
+        "fixture": "work/ne_avail.py",
+        "host": "work/ne_avail.py",
+        "root": "music",
+        "verify_only": True,
+        "writes": False,
     },
 ]
 

@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "bili_hora_audio_receipt_v1",
   "title": "Bili hora audio commit receipt v1",
-  "description": "Dropped into the receipts inbox by harmonia-music-writer after a durable local commit. The pipeline re-checks staged size, sha256, and duration before deleting only this job's temp video.",
+  "description": "Dropped after a durable local youtube.json commit. verified means the staged audio matched; it does not mean the public box can play. box_playable is false unless a later check sees the served /_ytlist/youtube.json and the resolve service. The pipeline may delete only this job's temp video after it rechecks sha256, size, and duration. This writer does not delete video and does not write library.json.",
   "type": "object",
   "required": ["schema", "queue_id", "identity", "bvid", "revision", "verified", "durable", "storage", "writer", "audio"],
   "additionalProperties": true,

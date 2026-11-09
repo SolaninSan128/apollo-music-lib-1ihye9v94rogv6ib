@@ -145,37 +145,34 @@ def snapshot_sha(path: str) -> str:
     return sha256_file(Path(path))
 
 
-def require_unchanged(path: str, expected: str) -> None:
-    """Fail closed if the file moved between the read and the locked write."""
+def require_unchanged(path: str, expected: str | None) -> None:
+    """Fail closed if the file moved between the read and the locked write.
+
+    ``expected is None`` means the file was absent at the read. It must still
+    be absent.
+    """
+    exists = os.path.isfile(path)
+    if expected is None:
+        if exists:
+            _die(LockError("cas_mismatch", expected=None, got=sha256_file(Path(path)), path=path))
+        return
+    if not exists:
+        _die(LockError("cas_mismatch", expected=expected, got=None, path=path))
     got = sha256_file(Path(path))
     if got != expected:
         _die(LockError("cas_mismatch", expected=expected, got=got, path=path))
 
 
-UNPATCHED_TOOLS = {
-    "poll_ratings.py": {"mutates": False, "proof": "source not in the script pack; treated as a read"},
-    "ne_avail.py": {"mutates": False, "proof": "source not in the script pack; treated as a read"},
-    "make_deploy_variants.py": {"mutates": True, "proof": "source not in the script pack; subprocess only under the library lock"},
-}
-
-
-def run_unpatched(name: str, argv: list, cwd: str | None = None) -> dict:
-    """Run a tool whose source we do not have. Does not claim the tool itself checks the lock."""
-    import subprocess
-    spec = UNPATCHED_TOOLS.get(name)
-    if spec is None:
-        _die(LockError("unpatched_tool_unknown", tool=name))
-    mode = "unchecked_read"
-    if spec["mutates"]:
-        mode = guard_library_mutation("build_push", None)
-    proc = subprocess.run([str(part) for part in argv], cwd=cwd, check=False)
-    return {
-        "ok": proc.returncode == 0,
-        "returncode": proc.returncode,
-        "internally_guarded": False,
-        "lock": mode,
-        "proof": spec["proof"],
-    }
+def run_unpatched(name: str, argv: list | None = None, cwd: str | None = None) -> dict:
+    """Refuse the old helper. It labeled poll_ratings as a read; that file writes the snapshot."""
+    del argv, cwd
+    _die(LockError(
+        "patched_entrypoint_required",
+        tool=name,
+        poll_ratings="writes work/ratings_snapshot.json",
+        make_deploy_variants="writes index.html, img, SHA256",
+        ne_avail="stdout JSON only; not a library writer",
+    ))
 
 
 def guard_library_mutation(entry: str, resource_path: str | None = None) -> str:

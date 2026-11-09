@@ -195,10 +195,63 @@ def _already(playlist: dict, song: dict, dest: Path, stat: dict) -> bool:
     return False
 
 
-def _receipt(item: dict, stat: dict, revision: str) -> dict:
+_PAGE_ID = re.compile(r"^(?:[A-Za-z0-9_-]{11}|BV[0-9A-Za-z]{10})$")
+
+
+def _playback(item: dict, song: dict, dest: Path, stat: dict) -> dict:
+    """Prove the page's path, not that the public box can already play.
+
+    index.html ytApply keeps a row only when the id matches and file or
+    file_m4a is set, then resolvePlayUrl sends that path to PLAY_RESOLVE.
+    The list is /_ytlist/youtube.json, not library.json. The resolve service
+    source is not in this repository, so this does not claim a live play.
+    """
+    alist = str(song.get("file") or "")
+    local_ok = (
+        dest.is_file()
+        and not dest.is_symlink()
+        and dest.stat().st_size == stat["size"]
+        and sha256_file(dest) == stat["sha256"]
+        and alist == item["audio"]["logical_dest"]
+        and _PAGE_ID.fullmatch(str(song.get("id") or "")) is not None
+    )
+    if not local_ok or not (song.get("file") or song.get("file_m4a")):
+        raise ConsumerError("playback_path")
+    writer = item.get("writer") or {}
+    callbacks = bool(writer.get("direct_publish")) or bool(writer.get("direct_build"))
+    return {
+        "library_json_written": False,
+        "playlist_role": "_ytlist",
+        "commit_scope": "local_playlist_plus_callback" if callbacks else "local_playlist",
+        "box_playable": False,
+        "playable_claim": "refused",
+        "playback": {
+            "page_keeps_row": True,
+            "alist_path": alist,
+            "play_resolve_query": "path=" + alist,
+            "local_path": str(dest),
+            "local_matches": True,
+            "served_ytlist_url": "/_ytlist/youtube.json",
+            "resolve_checked": False,
+            "resolve_server_source": "not in this repository",
+        },
+        "video_delete": {
+            "performed": False,
+            "local_audio_deleted": False,
+            "pipeline_may_delete_temp_video": True,
+            "condition": (
+                "the bili pipeline may delete only this job's temp video after it "
+                "rechecks the staged audio against this receipt's sha256, size, and duration. "
+                "A local playlist commit is not a claim that the public site can play the song."
+            ),
+        },
+    }
+
+
+def _receipt(item: dict, stat: dict, revision: str, song: dict, dest: Path) -> dict:
     if not _REVISION_RE.fullmatch(revision) or revision.lower() in _WEAK_REVISIONS:
         raise ConsumerError("revision")
-    return {
+    receipt = {
         "schema": RECEIPT_SCHEMA,
         "queue_id": item["queue_id"],
         "identity": item["identity"],
@@ -215,6 +268,8 @@ def _receipt(item: dict, stat: dict, revision: str) -> dict:
             "logical_dest": item["audio"]["logical_dest"],
         },
     }
+    receipt.update(_playback(item, song, dest, stat))
+    return receipt
 
 
 def _write_receipt(receipt_root: Path, receipt: dict) -> Path:
@@ -270,7 +325,7 @@ def commit_queue_item(
             raise ConsumerError("build_failed")
         if bool(writer.get("direct_publish")) and publisher(item) is not True:
             raise ConsumerError("publish_failed")
-        receipt = _receipt(item, stat, revision)
+        receipt = _receipt(item, stat, revision, song, dest)
         path = _write_receipt(receipt_root, receipt)
         return {"ok": True, "receipt_path": str(path), "receipt": receipt, "video_deleted": False}
     finally:
@@ -310,7 +365,13 @@ def main(argv: list[str] | None = None) -> int:
         return 76
     except SystemExit as exc:
         return int(exc.code) if isinstance(exc.code, int) else 76
-    sys.stdout.write(json.dumps({"ok": True, "video_deleted": False, "receipt": result["receipt_path"]}) + "\n")
+    sys.stdout.write(json.dumps({
+        "ok": True,
+        "video_deleted": False,
+        "box_playable": False,
+        "commit_scope": result["receipt"].get("commit_scope"),
+        "receipt": result["receipt_path"],
+    }) + "\n")
     return 0
 
 
