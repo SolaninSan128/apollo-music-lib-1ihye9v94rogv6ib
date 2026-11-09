@@ -1,0 +1,13 @@
+#!/bin/bash
+# Stable entry for Lomax routines and the publish boundary.
+# Usage: with_unified_lock plan|run|hold|stop-write-check ...
+# Does not default to a production lock path.
+set -euo pipefail
+HERE="$(cd "$(dirname "$0")" && pwd)"
+if [ -d "$HERE/unified_writer" ]; then
+  PYROOT="$HERE"
+else
+  PYROOT="$(cd "$HERE/.." && pwd)"
+fi
+export PYTHONPATH="$PYROOT${PYTHONPATH:+:$PYTHONPATH}"
+exec python3 -m unified_writer.wrapper "$@"
