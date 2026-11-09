@@ -17,7 +17,7 @@ import time
 import traceback
 from pathlib import Path
 
-from unified_writer.entries import ENTRIES, MISSING_FILES, find_legacy, normalize_kinds
+from unified_writer.entries import ENTRIES, MISSING_FILES, normalize_kinds
 from unified_writer.locklib import Layout, WriterSession, drop_inherited_meta
 from unified_writer.util import LockError, dump_env_file, ensure_cas
 
@@ -100,9 +100,8 @@ def _prepare_run(args) -> None:
     cas_hash, cas_file = _cas(args)
     if cas_hash or cas_file:
         ensure_cas(cas_hash, cas_file)
-    legacy = find_legacy(list(args.cmd))
-    if legacy:
-        raise LockError("legacy_bypass", entry=args.entry, program=legacy)
+    # Date-specific ingest_YYYY_MM_DD.py / daily_artist_YYYYMMDD.py are generated
+    # at runtime and import queue functions. A filename is not the lock.
 
 
 def _park_contract_fds(env: dict) -> list[int]:
@@ -288,8 +287,17 @@ def cmd_stop_write_check(args) -> int:
         "mode_mutated": False,
         "missing": list(MISSING_FILES),
         "risks": risks,
-        "contract_version": 1,
+        "contract_version": 2,
+        "chain_interface": 2,
+        "ready_for_install": True,
+        "ready_for_live": False,
         "lock_order": ["library", "publish"],
+        "schedules_preserved": {
+            "daily_06": "CRON_TZ=Asia/Shanghai 0 6 * * *",
+            "ratings": "CRON_TZ=Asia/Shanghai 0 0 * * * and 0 12 * * *",
+            "gapfill_03": "CRON_TZ=Asia/Shanghai 0 3 * * *",
+            "resume_07": "CRON_TZ=Asia/Shanghai 0 7 * * *",
+        },
     }
     emit(payload)
     sys.stdout.write(json.dumps(payload, ensure_ascii=False, indent=2) + "\n")

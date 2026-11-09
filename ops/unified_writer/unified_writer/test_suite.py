@@ -211,33 +211,25 @@ class GuardTests(unittest.TestCase):
         self.assertTrue(body["acq"]["ok"])
         self.assertFalse((self.root / "winpub" / "publish.claim.d").exists())
 
-    def test_legacy_bypass_and_guard_without_contract(self):
-        sentinel = self.tmp / "sentinel"
-        bare = self.tmp / "apply_ratings.py"
-        bare.write_text(f"open({str(sentinel)!r},'w').write('bad')\n", encoding="utf-8")
+    def test_dynamic_script_names_are_not_a_deny_list(self):
+        script = self.tmp / "ingest_2026_11_09.py"
+        script.write_text("print('dynamic-ok')\n", encoding="utf-8")
         proc = run_mod([
             "run", *self.common("--entry", "ratings"),
-            "--", sys.executable, str(bare), "--publish",
+            "--", sys.executable, str(script),
         ])
-        self.assertEqual(proc.returncode, 76, proc.stderr)
-        self.assertEqual(status_of(proc)["error"], "legacy_bypass")
-        self.assertEqual(status_of(proc)["program"], "apply_ratings.py")
-        self.assertFalse(sentinel.exists())
-        self.assertFalse(Path(str(self.lock) + ".meta.json").exists())
+        self.assertEqual(proc.returncode, 0, proc.stderr)
+        self.assertIn("dynamic-ok", proc.stdout)
+        guard_env = base_env()
+        for key in list(guard_env):
+            if key.startswith("HARMONIA_WRITER_") or key in ("HARMONIA_LIBRARY_LOCK_FD", "HARMONIA_RESOURCE_CAS"):
+                guard_env.pop(key, None)
         guard = subprocess.run(
             ["bash", str(BIN / "guard-ratings")],
-            capture_output=True, text=True, env=base_env(), check=False,
+            capture_output=True, text=True, env=guard_env, check=False,
         )
         self.assertEqual(guard.returncode, 76, guard.stderr)
         self.assertIn("legacy_bypass_no_contract", guard.stderr)
-        spotify = self.tmp / "apply_spotify_candidates.py"
-        spotify.write_text("raise SystemExit(0)\n", encoding="utf-8")
-        rejected = run_mod([
-            "run", *self.common("--entry", "increment", "--cas-file", str(self.cas), "--cas-hash", self.cas_hash),
-            "--", sys.executable, str(spotify),
-        ])
-        self.assertEqual(rejected.returncode, 76, rejected.stderr)
-        self.assertEqual(status_of(rejected)["error"], "legacy_bypass")
 
     def test_revision_mismatch_does_not_run(self):
         sentinel = self.tmp / "sentinel"
@@ -636,9 +628,12 @@ class GuardTests(unittest.TestCase):
         self.assertEqual(mode.read_text(encoding="utf-8"), before)
         self.assertEqual(body["mode"]["ratings"], "shadow")
         ids = {item["id"] for item in body["missing"]}
-        self.assertIn("apply_ratings.py", ids)
-        self.assertIn("harmonia_target.py", ids)
-        self.assertIn("pub_remote.py", ids)
+        self.assertIn("make_deploy_variants.py", ids)
+        self.assertIn("lomax_routines_not_updated", ids)
+        self.assertIn("windows_claim_not_proven_on_hora", ids)
+        self.assertTrue(body["ready_for_install"])
+        self.assertFalse(body["ready_for_live"])
+        self.assertTrue(body["formal_switch_blocked"])
 
     def test_install_rollback_preserves_library_and_mode(self):
         dest = self.tmp / "dest"

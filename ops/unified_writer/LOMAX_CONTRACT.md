@@ -1,71 +1,61 @@
+# Lomax contract (version 2)
+
+Interface version 2. Version 1’s filename deny list is not the lock. Date-specific `ingest_YYYY_MM_DD.py` and `daily_artist_YYYYMMDD.py` stay valid names. They import `run_all_queues` and call `commit_library_json`, `guarded_build`, and `guarded_pages_push`.
+
+Schedules are unchanged. See `ROUTINE_BOUNDARIES.md`. This package does not edit routine text.
+
 # Lomax contract (version 1)
 
-Do not change the four routine schedules, MODE, or the homepage from this package. Save the commands below. Running them on the server before the missing programs exist fails closed (exit 76). That is intentional.
+Do not change the four routine schedules, MODE, or the homepage from this package. Exit 75 means the library flock or the Windows publish claim is busy. Exit 76 means fail closed (CAS, fence, crash lease, or a publish without a claim).
 
-Lock order is always `library`, then `publish`. Exit 75 means the kernel lock or the Windows publish claim is busy. Exit 76 means fail closed (legacy name, missing program, CAS, fence, or crash lease).
+Set `HARMONIA_LIBRARY_LOCK` to `work/.library.lock` and `HARMONIA_UNIFIED_WRITER` to the directory that contains the `unified_writer` package (`work/ops` after `patch-install` copies it there).
 
-## Four routines
+## Fixed commands
 
-Ratings:
-
-```bash
-work/ops/with_unified_lock run --root work/.unified_lock --library-lock work/.library.lock \
-  --entry ratings --wait "${LOCK_WAIT:-1800}" -- \
-  work/ops/guard-ratings
-```
-
-Build and Pages push:
+Ratings, Pages only, no hora main publish:
 
 ```bash
-work/ops/with_unified_lock run --root work/.unified_lock --library-lock work/.library.lock \
-  --entry build_push --wait "${LOCK_WAIT:-1800}" -- \
-  work/ops/guard-build-push
+work/ops/with_library_lock.sh python3 work/apply_ratings.py --publish
 ```
 
-Download stays outside the lock. The library writeback does not:
+After the hash-gated patch, `apply_ratings.py` also takes that same flock itself before it writes. `--dry-run` still does not write.
+
+03:00 writeback is `commit_library_json` (or ops `gapfill` live, which already holds the flock) then `guarded_build` and `guarded_pages_push`. It does not call `harmonia_publish.py`.
+
+06:00 / 07:00, inside the generated script, after downloads:
+
+```python
+import run_all_queues as rq
+rq.commit_library_json("library.json", lib, expected_sha=old_sha)
+rq.guarded_build()
+rq.guarded_pages_push(deploy_dir)
+```
+
+07:00 collision, instead of a 20-minute mtime check, once the prompt is saved:
+
+```python
+from unified_writer.prod_guard import collision_blocks
+if collision_blocks("work/.library.lock")["blocked"]:
+    raise SystemExit(0)
+```
+
+`make_deploy_variants.py` is run under `rq.guarded_build([sys.executable, "work/make_deploy_variants.py", pkg])` or `LibraryChain.run`. Its own source was not in the pack.
+
+## Main-site publish (Feynman, separate)
 
 ```bash
-work/ops/with_unified_lock run --root work/.unified_lock --library-lock work/.library.lock \
-  --entry download_writeback --cas-file work/library.json --cas-hash "$LIBRARY_SHA" \
-  --wait "${LOCK_WAIT:-1800}" -- \
-  work/ops/guard-download-writeback
+HARMONIA_LIBRARY_LOCK=work/.library.lock \
+HARMONIA_LOCK_ROOT=work/.unified_lock \
+HARMONIA_UNIFIED_WRITER=work/ops \
+python3 cand/publish/harmonia_publish.py <package-dir> --execute
 ```
 
-Spotify / HongKong increment, only after a reviewed hash of the current library file. This package does not apply either candidate:
-
-```bash
-work/ops/with_unified_lock run --root work/.unified_lock --library-lock work/.library.lock \
-  --entry increment --cas-file work/library.json --cas-hash "$LIBRARY_SHA" \
-  --wait "${LOCK_WAIT:-1800}" -- \
-  work/ops/guard-increment
-```
-
-Point `HARMONIA_REAL_RATINGS`, `HARMONIA_REAL_BUILD_PUSH`, `HARMONIA_REAL_DOWNLOAD_WRITEBACK`, and `HARMONIA_REAL_INCREMENT` at the real programs only after those files are on disk. Until then the guards exit 76.
-
-## Env the child can trust
-
-`HARMONIA_WRITER_CONTRACT=1`, `HARMONIA_CONTRACT_VERSION=1`, `HARMONIA_WRITER_ENTRY`, `HARMONIA_WRITER_TOKEN`, `HARMONIA_WRITER_FENCE_LIBRARY`, `HARMONIA_WRITER_FENCE_PUBLISH`, `HARMONIA_WRITER_KINDS`, `HARMONIA_LIBRARY_LOCK_FD`, `HARMONIA_PUBLISH_LOCK_FD`, `HARMONIA_LIBRARY_LOCK_PATH`, `HARMONIA_WIN_PUBLISH_CLAIM`, `HARMONIA_RESOURCE_CAS`, `HARMONIA_LOCK_ORDER=library,publish`.
-
-`commit_cas` is the fenced replace. A raw write of `library.json` is still possible from an unwrapped program; that is why the switch stays blocked.
-
-## Publish (not a Lomax routine)
-
-```bash
-work/ops/with_unified_lock run --root work/.unified_lock --library-lock work/.library.lock \
-  --entry publish --cas-file "$PACKAGE/index.html" --cas-hash "$INDEX_SHA" --plan-only
-```
-
-Do not pass `harmonia_publish.py --execute`. The guard rejects `--execute` unless `HARMONIA_ALLOW_PUBLISH_EXECUTE=1` and `HARMONIA_WIN_LOCK_HELPER` are both set, and this package does not set them.
-
-## Legacy flock
-
-`work/ops/with_library_lock.sh <command>` still flocks `work/.library.lock` and still exits 75 on timeout. It now also records a token and fence. It does not take the publish claim and it does not make a bare `apply_ratings.py` safe.
+That arms the claim and uploads `PUBLISH_CLAIM.json`. `pub_remote.py` will not replace `index.html` without it. Ratings and 03:00 must not use this command. Spotify / HongKong apply stays out of this change.
 
 ## Check
 
 ```bash
 work/ops/check.sh
-work/ops/check.sh --self-test
 ```
 
-Exit 0 from `check.sh` means `formal_switch_blocked` is still true.
+Exit 0 means `formal_switch_blocked` is still true and `ready_for_live` is false.

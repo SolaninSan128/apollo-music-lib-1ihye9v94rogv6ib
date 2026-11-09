@@ -1,4 +1,5 @@
 #!/bin/bash
+# HARMONIA_UNIFIED_GUARD_v1
 # work/ops/with_library_lock.sh <command...>
 # Same call shape and same flock inode as the legacy script.
 # Exit 75 if the kernel lock is not acquired within LOCK_WAIT seconds (default 1800).

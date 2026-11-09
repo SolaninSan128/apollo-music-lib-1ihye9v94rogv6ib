@@ -12,6 +12,18 @@ Current production homepage and `PLAY_RESOLVE` (`https://harmonia.corgihora.bid/
 - Windows publish mutex is a `mkdir` claim (`winpub_lock.py` does not import `fcntl`). A remote pid is not proof the publisher died. An unexpired claim conflicts. An expired claim is taken over only with a matching hash; otherwise it fails closed.
 - A crash that leaves meta and drops the kernel lock fails closed until the lease ends **and** the hash matches.
 
+## Install the production patches
+
+`bin/patch-install` checks each on-host sha256, writes `*.bak.unified-writer-v1`, and applies anchors that do not include redacted secret lines. A drifted file exits 76. It does not publish, download, or edit MODE.
+
+```bash
+bin/patch-install --root /workspace/harmonia-handoff/music-library \
+  --publish-root /workspace/musicbox_hora/cand/publish \
+  --music-dl-root /workspace/musicbox_hora/cand/music-dl
+```
+
+`--check` only reports. `--fixture` is for the redacted copies under `fixtures/prod` and must not be used on the host. `ready_for_install` means the patch set applies. `ready_for_live` stays false until Lomax saves the new calls and the Windows claim has been proven on hora.
+
 ## Commands
 
 From this directory, against a temp root only:

@@ -60,54 +60,34 @@ ENTRIES = {
     },
 }
 
-# Present in neither the Pages repo nor the sanitized handoff. Do not invent them.
+# Sources now in the handoff are patched by hash. These are the live gaps.
 MISSING_FILES = (
     {
-        "id": "apply_ratings.py",
-        "expected_path": "work/apply_ratings.py",
-        "why": "ratings --publish writer; not in the deploy repo or the handoff",
+        "id": "make_deploy_variants.py",
+        "expected_path": "work/make_deploy_variants.py",
+        "why": "fixed Pages/main package builder; source was not in the handoff, so only LibraryChain.run covers it",
     },
     {
-        "id": "build.py",
-        "expected_path": "music-library/build.py",
-        "why": "Pages build; not shipped",
+        "id": "poll_ratings.py",
+        "expected_path": "work/poll_ratings.py",
+        "why": "ratings fetch; source was not in the handoff. apply_ratings --publish is the mutation",
     },
     {
-        "id": "run_all_queues.py",
-        "expected_path": "work/run_all_queues.py",
-        "why": "download writeback module; not shipped",
+        "id": "ne_avail.py",
+        "expected_path": "work/ne_avail.py",
+        "why": "availability probe used by 06:00; source was not in the handoff",
     },
     {
-        "id": "harmonia_target.py",
-        "expected_path": "cand/publish/harmonia_target.py",
-        "why": "handoff stub has no is_hora, label, rpath, _ssh, _scp, HOPT, HHOST, or PY",
-    },
-    {
-        "id": "pub_remote.py",
-        "expected_path": "cand/publish/pub_remote.py",
-        "why": "Windows publish executor referenced by harmonia_publish.py; not shipped",
-    },
-    {
-        "id": "harmonia_ops.py",
-        "expected_path": "work/ops/harmonia_ops.py",
-        "why": "only the library_lock excerpt was shipped",
-    },
-    {
-        "id": "lomax_routine_prompts",
+        "id": "lomax_routines_not_updated",
         "expected_path": "",
-        "why": "the four routine prompts were not in the handoff, so wrap coverage is unverified",
+        "why": "06/07 prompts were read; this package does not edit them. Lomax saves the new calls",
+    },
+    {
+        "id": "windows_claim_not_proven_on_hora",
+        "expected_path": "C:/harmonia/pub/winpub",
+        "why": "ensure_win_claim was not executed against the live Windows host",
     },
 )
-
-LEGACY_BASENAMES = {
-    "apply_ratings.py",
-    "build.py",
-    "run_all_queues.py",
-    "harmonia_publish.py",
-    "harmonia_ops.py",
-    "pub_remote.py",
-}
-
 
 def normalize_kinds(kinds: tuple[str, ...] | list[str]) -> tuple[str, ...]:
     unknown = [k for k in kinds if k not in LOCK_ORDER]
@@ -121,16 +101,6 @@ def normalize_kinds(kinds: tuple[str, ...] | list[str]) -> tuple[str, ...]:
 
 
 def find_legacy(argv: list[str]) -> str | None:
-    from pathlib import Path
-    for index, arg in enumerate(argv):
-        name = Path(arg).name
-        if name in LEGACY_BASENAMES:
-            return name
-        if name.startswith("ingest_") and name.endswith(".py"):
-            return name
-        lower = name.lower()
-        if "spotify" in lower or "hongkong" in lower or "hong_kong" in lower:
-            return name
-        if arg == "-m" and index + 1 < len(argv) and argv[index + 1] in {"run_all_queues"}:
-            return argv[index + 1]
+    """Filename lists are not the lock. Date-specific scripts stay callable."""
+    del argv
     return None
