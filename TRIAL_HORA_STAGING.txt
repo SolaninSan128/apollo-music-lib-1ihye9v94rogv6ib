@@ -1,0 +1,3 @@
+throw-away trial branch from hora staging; safe to delete.
+index_sha256=49b50e877df92e18cdab7d22faffd1d7200eb10662cdd3d3b0b5c477b3d65016
+library_sha256=57432abfcc8b3626c2600c4308f5cd65971916145a94ff46aec1835290ac183d
