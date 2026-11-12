@@ -1,0 +1,17 @@
+{
+  "note": "Bili consumer CAS-updates youtube.json playlist only; does not write library.json. Build of main library.html uses library.json; YouTube playlist page/data is separate youtube.json under _ytlist.",
+  "source": "daily",
+  "song_example": {
+    "id": "foals-mountainatmygates",
+    "title": "Mountain at My Gates",
+    "artist": "Foals",
+    "album": "What Went Down",
+    "spotify": "https://open.spotify.com/track/3f7OyfSoDbQC0LRDQiytPp",
+    "youtube": "https://www.youtube.com/watch?v=l_EIE5f2t6M",
+    "cover": "3f7OyfSoDbQC0LRDQiytPp.jpg",
+    "netease": "https://music.163.com/song?id=33419016"
+  },
+  "library_playlists": [
+    "city-pop-dj-set"
+  ]
+}

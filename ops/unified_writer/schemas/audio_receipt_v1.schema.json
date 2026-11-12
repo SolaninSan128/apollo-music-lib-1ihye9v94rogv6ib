@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "bili_hora_audio_receipt_v1",
+  "title": "Bili hora audio commit receipt v1",
+  "description": "box_playable and local_matches are JSON booleans. The downloader deletes the temp video only when box_playable is true, commit_scope is served_playlist_verified, local_matches is true, and queue, id, revision, hash, size, and duration match. local_playlist with box_playable false keeps the video. served_playlist_verified is written only after the served _ytlist row, the local ledger, and the active resolver local path all match.",
+  "type": "object",
+  "required": ["schema", "queue_id", "identity", "bvid", "revision", "verified", "durable", "storage", "writer", "audio"],
+  "additionalProperties": true,
+  "properties": {
+    "schema": {"const": "bili_hora_audio_receipt_v1"},
+    "queue_id": {"type": "string"},
+    "identity": {"type": "string"},
+    "bvid": {"type": "string"},
+    "revision": {"type": "string", "minLength": 8},
+    "verified": {"const": true},
+    "durable": {"const": true},
+    "storage": {"const": "local"},
+    "writer": {"const": "harmonia-music-writer"},
+    "box_playable": {"type": "boolean"},
+    "local_matches": {"type": "boolean"},
+    "commit_scope": {"enum": ["local_playlist", "served_playlist_verified"]},
+    "audio": {
+      "type": "object",
+      "required": ["sha256", "size", "duration_sec", "logical_dest"],
+      "properties": {
+        "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "size": {"type": "integer", "minimum": 1},
+        "duration_sec": {"type": "number"}
+      }
+    }
+  }
+}

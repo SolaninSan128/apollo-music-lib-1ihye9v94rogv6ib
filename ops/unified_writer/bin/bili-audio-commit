@@ -1,0 +1,7 @@
+#!/bin/bash
+# Commit one pending Bili audio item. Does not delete video and does not upload to 115.
+set -euo pipefail
+HERE="$(cd "$(dirname "$0")" && pwd)"
+if [ -d "$HERE/unified_writer" ]; then PYROOT="$HERE"; else PYROOT="$(cd "$HERE/.." && pwd)"; fi
+export PYTHONPATH="$PYROOT${PYTHONPATH:+:$PYTHONPATH}"
+exec python3 -m unified_writer.bili_consumer "$@"

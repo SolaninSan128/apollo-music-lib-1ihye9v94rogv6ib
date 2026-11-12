@@ -1,0 +1,8 @@
+__pycache__/
+*.pyc
+.unified_lock_scratch/
+.unified_lock/
+.library.lock
+.library.lock.owner
+.library.lock.fence
+.library.lock.meta.json

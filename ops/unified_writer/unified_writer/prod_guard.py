@@ -1,0 +1,484 @@
+"""Production mutation guard.
+
+Dynamic date-specific scripts and the fixed entrypoints call these functions.
+A filename is not a credential. The gate is the kernel flock on
+work/.library.lock, plus the publish mkdir claim for the main-site index.
+"""
+from __future__ import annotations
+
+import atexit
+import json
+import os
+import sys
+from pathlib import Path
+
+from unified_writer.locklib import Layout, WriterSession
+from unified_writer.util import LockError, sha256_file
+
+GUARD = "HARMONIA_UNIFIED_GUARD_v1"
+CHAIN_INTERFACE = 2
+LIBRARY_ENTRIES = {
+    "ratings",
+    "build_push",
+    "download_writeback",
+    "increment",
+    "library_compat",
+    "daily_ingest",
+}
+CONTRACT_ENTRIES = {
+    "ratings",
+    "build_push",
+    "download_writeback",
+    "increment",
+    "library_compat",
+    "publish",
+}
+_HELD: dict | None = None
+_ATEXIT = False
+
+WHO_ENTRY = {
+    "ratings": "ratings",
+    "gapfill": "download_writeback",
+    "dailycheck": "build_push",
+}
+
+
+def _die(exc: LockError) -> None:
+    sys.stderr.write(GUARD + " " + json.dumps(exc.to_dict(), ensure_ascii=False) + "\n")
+    raise SystemExit(exc.exit_code)
+
+
+def _ensure_import_path() -> None:
+    env_path = os.environ.get("HARMONIA_UNIFIED_WRITER") or ""
+    if env_path and env_path not in sys.path:
+        sys.path.insert(0, env_path)
+
+
+def find_library_lock(resource_path: str | None = None) -> str:
+    explicit = os.environ.get("HARMONIA_LIBRARY_LOCK") or ""
+    if explicit:
+        return explicit
+    if resource_path and os.path.basename(resource_path) == "library.json":
+        return os.path.join(os.path.dirname(os.path.abspath(resource_path)), "work", ".library.lock")
+    cwd = os.getcwd()
+    for candidate in (os.path.join(cwd, "work", ".library.lock"), os.path.join(cwd, ".library.lock")):
+        if os.path.isdir(os.path.dirname(candidate)):
+            return candidate
+    raise LockError("library_lock_unconfigured")
+
+
+def _lock_root(lock_path: str) -> str:
+    explicit = os.environ.get("HARMONIA_LOCK_ROOT") or ""
+    if explicit:
+        return explicit
+    return os.path.join(os.path.dirname(os.path.abspath(lock_path)), ".unified_lock")
+
+
+def _arm_exit() -> None:
+    global _HELD
+    held = _HELD
+    _HELD = None
+    if not held or not held.get("owned"):
+        return
+    try:
+        held["session"].release()
+    except Exception:
+        pass
+
+
+def _remember(session: WriterSession, owned: bool) -> None:
+    global _HELD, _ATEXIT
+    _HELD = {"session": session, "owned": owned}
+    if owned and not _ATEXIT:
+        atexit.register(_arm_exit)
+        _ATEXIT = True
+
+
+def _contract_entry(requested: str) -> str:
+    if requested in CONTRACT_ENTRIES:
+        return requested
+    return "library_compat"
+
+
+def release_if_owned() -> None:
+    """Drop a lock this process acquired. An inherited parent lock stays."""
+    global _HELD
+    held = _HELD
+    if not held or not held.get("owned"):
+        return
+    _HELD = None
+    try:
+        held["session"].release()
+    except Exception:
+        pass
+    end_held_flock()
+
+
+def _assert_held_library(requested: str) -> None:
+    from unified_writer.contract import assert_contract
+
+    env_entry = os.environ.get("HARMONIA_WRITER_ENTRY") or ""
+    if requested == "publish":
+        assert_contract("publish")
+        return
+    if env_entry not in LIBRARY_ENTRIES or requested not in LIBRARY_ENTRIES:
+        raise LockError("entry_mismatch", expected=requested, got=env_entry)
+    assert_contract(env_entry)
+
+
+def _check_cas(requested: str, resource_path: str | None) -> None:
+    if requested not in ("download_writeback", "increment"):
+        return
+    expected = os.environ.get("HARMONIA_RESOURCE_CAS") or ""
+    if not expected or not resource_path:
+        raise LockError("cas_required", entry=requested)
+    path = Path(resource_path)
+    if not path.is_file():
+        raise LockError("cas_mismatch", reason="missing_resource", path=str(path), expected=expected)
+    got = sha256_file(path)
+    if got != expected:
+        raise LockError("cas_mismatch", expected=expected, got=got, path=str(path))
+
+
+def snapshot_sha(path: str) -> str:
+    """Hash a file before the unlocked read. Compared again after the lock."""
+    return sha256_file(Path(path))
+
+
+def require_unchanged(path: str, expected: str | None) -> None:
+    """Fail closed if the file moved between the read and the locked write.
+
+    ``expected is None`` means the file was absent at the read. It must still
+    be absent.
+    """
+    exists = os.path.isfile(path)
+    if expected is None:
+        if exists:
+            _die(LockError("cas_mismatch", expected=None, got=sha256_file(Path(path)), path=path))
+        return
+    if not exists:
+        _die(LockError("cas_mismatch", expected=expected, got=None, path=path))
+    got = sha256_file(Path(path))
+    if got != expected:
+        _die(LockError("cas_mismatch", expected=expected, got=got, path=path))
+
+
+def run_unpatched(name: str, argv: list | None = None, cwd: str | None = None) -> dict:
+    """Refuse the old helper. It labeled poll_ratings as a read; that file writes the snapshot."""
+    del argv, cwd
+    _die(LockError(
+        "patched_entrypoint_required",
+        tool=name,
+        poll_ratings="writes work/ratings_snapshot.json",
+        make_deploy_variants="writes index.html, img, SHA256",
+        ne_avail="stdout JSON only; not a library writer",
+    ))
+
+
+def guard_library_mutation(entry: str, resource_path: str | None = None) -> str:
+    """Hold or prove the library flock before a library/build/Pages mutation."""
+    _ensure_import_path()
+    try:
+        if os.environ.get("HARMONIA_WRITER_CONTRACT") == "1":
+            _assert_held_library(entry)
+            _check_cas(entry, resource_path)
+            return "inherited"
+        lock = find_library_lock(resource_path)
+        root = _lock_root(lock)
+        cas = cas_file = None
+        if entry in ("download_writeback", "increment") and resource_path and os.path.isfile(resource_path):
+            cas = sha256_file(Path(resource_path))
+            cas_file = resource_path
+        session = WriterSession(
+            Layout(root, library_lock=Path(lock)),
+            lease_sec=float(os.environ.get("HARMONIA_LEASE_SEC", "600")),
+            remote_skew_sec=float(os.environ.get("HARMONIA_REMOTE_SKEW_SEC", "30")),
+            who=entry,
+        )
+        session.acquire(
+            ("library",),
+            wait_sec=float(os.environ.get("LOCK_WAIT", "30")),
+            resource_cas=cas,
+            cas_file=cas_file,
+            cmd=entry,
+        )
+        os.environ.update(session.contract_env(_contract_entry(entry)))
+        if cas:
+            os.environ["HARMONIA_RESOURCE_CAS"] = cas
+        _remember(session, True)
+        return "acquired"
+    except LockError as exc:
+        _die(exc)
+    raise AssertionError("unreachable")
+
+
+def begin_held_flock(fd: int, lock_path: str, who: str, library_path: str | None = None) -> None:
+    """Ops already holds flock on fd. Record the contract without opening the file again."""
+    _ensure_import_path()
+    try:
+        os.set_inheritable(fd, True)
+        entry = WHO_ENTRY.get(who, "library_compat")
+        root = _lock_root(lock_path)
+        cas = cas_file = None
+        if entry == "download_writeback" and library_path and os.path.isfile(library_path):
+            cas = sha256_file(Path(library_path))
+            cas_file = library_path
+        session = WriterSession(
+            Layout(root, library_lock=Path(lock_path)),
+            lease_sec=float(os.environ.get("HARMONIA_LEASE_SEC", "600")),
+            remote_skew_sec=float(os.environ.get("HARMONIA_REMOTE_SKEW_SEC", "30")),
+            who=who,
+        )
+        session.adopt_library_fd(fd, resource_cas=cas, cas_file=cas_file, cmd=who)
+        os.environ.update(session.contract_env(entry))
+        os.environ["HARMONIA_LIBRARY_LOCK_FD"] = str(fd)
+        if cas:
+            os.environ["HARMONIA_RESOURCE_CAS"] = cas
+        _remember(session, False)
+    except LockError as exc:
+        _die(exc)
+
+
+def end_held_flock() -> None:
+    global _HELD
+    held = _HELD
+    _HELD = None
+    if held:
+        try:
+            held["session"].release_meta_keep_flock()
+        except Exception:
+            pass
+    for key in (
+        "HARMONIA_WRITER_CONTRACT",
+        "HARMONIA_CONTRACT_VERSION",
+        "HARMONIA_WRITER_ENTRY",
+        "HARMONIA_WRITER_TOKEN",
+        "HARMONIA_WRITER_FENCE_LIBRARY",
+        "HARMONIA_WRITER_FENCE_PUBLISH",
+        "HARMONIA_WRITER_KINDS",
+        "HARMONIA_LIBRARY_LOCK_FD",
+        "HARMONIA_PUBLISH_LOCK_FD",
+        "HARMONIA_LIBRARY_LOCK_PATH",
+        "HARMONIA_PUBLISH_LOCK_PATH",
+        "HARMONIA_WIN_PUBLISH_CLAIM",
+        "HARMONIA_RESOURCE_CAS",
+        "HARMONIA_LOCK_ORDER",
+    ):
+        os.environ.pop(key, None)
+
+
+def subprocess_lock_kwargs() -> dict:
+    """Pass the inherited lock fd into build.py / apply_ratings.py children."""
+    if os.environ.get("HARMONIA_WRITER_CONTRACT") != "1":
+        _die(LockError("legacy_bypass_no_contract"))
+    fds = []
+    env = os.environ.copy()
+    for key in ("HARMONIA_LIBRARY_LOCK_FD", "HARMONIA_PUBLISH_LOCK_FD"):
+        raw = env.get(key) or ""
+        if not raw:
+            continue
+        fd = int(raw)
+        os.set_inheritable(fd, True)
+        fds.append(fd)
+    if not fds:
+        _die(LockError("legacy_bypass_lock_not_held"))
+    return {"env": env, "pass_fds": tuple(fds)}
+
+
+def _require_pages_git_tree(deploy_dir: str) -> str:
+    """The Pages git work tree named by HARMONIA_PAGES_DEPLOY. A package directory is refused.
+
+    Relative paths join HARMONIA_MUSIC_ROOT only. The process cwd is not an anchor.
+    """
+    import subprocess
+    raw = os.fspath(deploy_dir)
+    path = Path(raw)
+    if not path.is_absolute():
+        anchor = os.environ.get("HARMONIA_MUSIC_ROOT") or ""
+        if not anchor or not Path(anchor).is_dir():
+            _die(LockError("pages_tree_unresolvable", exit_code=76))
+        path = Path(anchor) / path
+    if not path.is_dir() or not (path / ".git").exists():
+        _die(LockError("pages_not_git_tree", exit_code=76, reason="date_package_refused"))
+    expected = os.environ.get("HARMONIA_PAGES_DEPLOY") or ""
+    if not expected:
+        _die(LockError("pages_tree_unanchored", exit_code=76))
+    try:
+        expected_real = str(Path(expected).resolve(strict=True))
+        got = str(path.resolve(strict=True))
+    except OSError:
+        _die(LockError("pages_tree_unresolvable", exit_code=76))
+    if got != expected_real:
+        _die(LockError("pages_not_deploy_tree", exit_code=76))
+    proc = subprocess.run(
+        ["git", "-C", got, "rev-parse", "--show-toplevel"],
+        capture_output=True, text=True, check=False,
+    )
+    if proc.returncode != 0:
+        _die(LockError("pages_not_git_tree", exit_code=76))
+    top = proc.stdout.strip()
+    try:
+        if str(Path(top).resolve(strict=True)) != got:
+            _die(LockError("pages_not_git_tree", exit_code=76, reason="not_toplevel"))
+    except OSError:
+        _die(LockError("pages_not_git_tree", exit_code=76))
+    return got
+
+
+def ordinary_git_push(cwd: str, remote: str = "origin", branch: str = "main") -> None:
+    """Push the current branch to origin. Does not add or commit. Refuses --force."""
+    import subprocess
+    argv = ["git", "push", remote, branch]
+    _refuse_force(argv)
+    proc = subprocess.run(argv, cwd=cwd, check=False)
+    if proc.returncode != 0:
+        _die(LockError("git_failed", exit_code=76))
+
+
+def canonical_lock_path(lock_path: str | None = None) -> tuple[str | None, str]:
+    """Resolve a lock path without using the process cwd and without creating a file.
+
+    Absolute paths are used as given. A relative path is joined only to
+    HARMONIA_MUSIC_ROOT. An unanchored relative path does not fall back to cwd.
+    """
+    raw = lock_path if lock_path else (os.environ.get("HARMONIA_LIBRARY_LOCK") or "")
+    if not raw:
+        return None, "lock_absent"
+    path = Path(raw)
+    if not path.is_absolute():
+        anchor = os.environ.get("HARMONIA_MUSIC_ROOT") or ""
+        if not anchor or not Path(anchor).is_dir():
+            return None, "lock_unresolvable"
+        path = Path(anchor) / path
+    parent = path.parent
+    if not parent.is_dir():
+        return None, "lock_unresolvable"
+    try:
+        parent_real = parent.resolve(strict=True)
+    except OSError:
+        return None, "lock_unresolvable"
+    full = parent_real / path.name
+    if not full.is_file():
+        return str(full), "lock_absent"
+    try:
+        return str(full.resolve(strict=True)), ""
+    except OSError:
+        return str(full), "lock_unresolvable"
+
+
+def _refuse_force(argv: list) -> None:
+    bad = [arg for arg in argv if arg in ("--force", "-f", "--force-with-lease") or (isinstance(arg, str) and arg.startswith("+"))]
+    if bad:
+        _die(LockError("ordinary_push_only", args=",".join(bad)))
+
+
+def collision_blocks(lock_path: str | None = None) -> dict:
+    """Real lock state for the 07:00 resume. This does not look at mtime.
+
+    A missing or unresolvable lock is fail-closed (blocked, exit 76). It is not
+    treated as free, and this function does not create a lock file.
+    """
+    import fcntl
+    resolved, problem = canonical_lock_path(lock_path)
+    result = {
+        "blocked": False,
+        "reason": "free",
+        "fail_closed": False,
+        "exit_code": 0,
+        "heuristic_mtime": False,
+        "guard": GUARD,
+        "lock_path": resolved or "",
+    }
+    if problem:
+        result["blocked"] = True
+        result["fail_closed"] = True
+        result["reason"] = problem
+        result["exit_code"] = 76
+        return result
+    path = resolved or ""
+    fd = os.open(path, os.O_RDWR)
+    try:
+        try:
+            fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except BlockingIOError:
+            result["blocked"] = True
+            result["reason"] = "lock_held"
+            result["exit_code"] = 75
+            return result
+        fcntl.flock(fd, fcntl.LOCK_UN)
+    finally:
+        os.close(fd)
+    meta_path = path + ".meta.json"
+    if os.path.isfile(meta_path):
+        try:
+            meta = json.loads(Path(meta_path).read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            result["blocked"] = True
+            result["fail_closed"] = True
+            result["reason"] = "meta_corrupt_fail_closed"
+            result["exit_code"] = 76
+            return result
+        if time_unexpired(meta):
+            result["blocked"] = True
+            result["fail_closed"] = True
+            result["reason"] = "crash_lease_fail_closed"
+            result["exit_code"] = 76
+            result["holder_pid"] = meta.get("pid")
+    return result
+
+
+def time_unexpired(meta: dict) -> bool:
+    import time
+    try:
+        return time.time() < float(meta.get("lease_until") or 0)
+    except (TypeError, ValueError):
+        return True
+
+
+def arm_site_publish(deploy_dir: str, index_sha: str, index_path: str | None = None) -> dict:
+    """Library flock, then the publish claim, then PUBLISH_CLAIM.json.
+
+    Ratings and the 03:00 gapfill must not call this. Main-site publish is separate.
+    """
+    _ensure_import_path()
+    try:
+        lock = find_library_lock(None)
+        root = _lock_root(lock)
+        win_parent = os.environ.get("HARMONIA_WIN_PARENT") or os.path.join(root, "winpub")
+        index_path = index_path or os.path.join(deploy_dir, "index.html")
+        session = WriterSession(
+            Layout(root, library_lock=Path(lock), win_parent=Path(win_parent)),
+            lease_sec=float(os.environ.get("HARMONIA_LEASE_SEC", "600")),
+            remote_skew_sec=float(os.environ.get("HARMONIA_REMOTE_SKEW_SEC", "30")),
+            who="publish",
+        )
+        session.acquire(
+            ("library", "publish"),
+            wait_sec=float(os.environ.get("LOCK_WAIT", "30")),
+            resource_cas=index_sha,
+            cas_file=index_path,
+            cmd="publish",
+        )
+        claim_dir = str(Path(win_parent) / "publish.claim.d")
+        live = json.loads((Path(claim_dir) / "meta.json").read_text(encoding="utf-8"))
+        document = {
+            "guard": GUARD,
+            "contract_version": 1,
+            "owner_token": live["owner_token"],
+            "fence": live["fence"],
+            "resource_cas": index_sha,
+            "claim_dir": claim_dir,
+            "lease_until": live["lease_until"],
+        }
+        Path(deploy_dir, "PUBLISH_CLAIM.json").write_text(
+            json.dumps(document, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
+        )
+        os.environ.update(session.contract_env("publish"))
+        _remember(session, True)
+        if os.environ.get("HARMONIA_PUBLISH_TRANSPORT", "ssh") != "local":
+            import harmonia_target as target
+            target.ensure_win_claim(os.path.join(deploy_dir, "PUBLISH_CLAIM.json"))
+        return document
+    except LockError as exc:
+        _die(exc)
+    raise AssertionError("unreachable")

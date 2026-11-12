@@ -1,0 +1,33 @@
+{
+  "source_path": "/workspace/musicbox_hora/src/var/www/musicbox/_ytlist/youtube.json",
+  "meta": {
+    "top_keys": [
+      "id",
+      "name",
+      "description",
+      "generated",
+      "songs"
+    ]
+  },
+  "song_example": {
+    "id": "BV1C6421M7wP",
+    "title": "毫不夸张的说这是我最爱的一场Live，听完直接飞升了【Olivia Dean  ︳Carmen】",
+    "artist": "Caxiu",
+    "channel": "Caxiu",
+    "duration": 246,
+    "acodec": "aac",
+    "abr": 181,
+    "ext": "m4a",
+    "format_id": "video-extract",
+    "file": "/115/音乐库/歌单/youtube/毫不夸张的说这是我最爱的一场Live，听完直接飞升了【Olivia Dean ︳Carmen】 [BV1C6421M7wP].m4a",
+    "file_m4a": "/115/音乐库/歌单/youtube/毫不夸张的说这是我最爱的一场Live，听完直接飞升了【Olivia Dean ︳Carmen】 [BV1C6421M7wP].m4a",
+    "abr_m4a": 181,
+    "format_id_m4a": null,
+    "size": 5596651,
+    "src": "bilibili",
+    "source": "video:/115/Bilibili收藏/Live/毫不夸张的说这是我最爱的一场Live，听完直接飞升了【Olivia Dean ︳Carmen】 [BV1C6421M7wP].mp4",
+    "thumb": "https://riju.corgihora.bid/youtube/thumbs/BV1C6421M7wP.jpg",
+    "yt_url": "https://www.bilibili.com/video/BV1C6421M7wP",
+    "done_at": "2026-11-03T17:54:32+08:00"
+  }
+}
